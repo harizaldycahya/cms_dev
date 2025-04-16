@@ -1,0 +1,1024 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>RELOKASI KABEL B2JS.kmz</name>
+	<Style id="inline">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline0">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline39</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline7</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="inline1">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline20</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline3</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline2">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline3">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline4">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline5">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline13</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline34</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline6">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline7">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline8">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline42</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline32</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="inline9">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline12</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline4</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline10">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline11">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline52</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline43</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline12">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline13">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline14">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline41</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline27</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline15">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline16">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline38</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline28</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline17">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline18">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline48</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline15</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="inline19">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline49</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline24</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline20">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="m_ylw-pushpin">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#s_ylw-pushpin</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#s_ylw-pushpin_hl</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="inline21">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline50</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline22">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline23">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline24">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline25">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline37</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline10</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="s_ylw-pushpin">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/paddle/ylw-circle.png</href>
+			</Icon>
+			<hotSpot x="32" y="1" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<ListStyle>
+			<ItemIcon>
+				<href>http://maps.google.com/mapfiles/kml/paddle/ylw-circle-lv.png</href>
+			</ItemIcon>
+		</ListStyle>
+	</Style>
+	<StyleMap id="inline26">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline35</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline17</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline27">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline28">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline29">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline30">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline29</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline23</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline31">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline32">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline33">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline34">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline35">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline36">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline33</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline2</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline37">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline38">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline39">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline40">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline47</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline51</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline41">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline42">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline43">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline44">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline6</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline22</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline45">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline46">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline45</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline31</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline47">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="s_ylw-pushpin_hl">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/paddle/ylw-circle.png</href>
+			</Icon>
+			<hotSpot x="32" y="1" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<ListStyle>
+			<ItemIcon>
+				<href>http://maps.google.com/mapfiles/kml/paddle/ylw-circle-lv.png</href>
+			</ItemIcon>
+		</ListStyle>
+	</Style>
+	<Style id="inline48">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline49">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline50">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline51">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline52">
+		<LineStyle>
+			<color>ff00ffff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Folder>
+		<name>RELOKASI KABEL B2JS</name>
+		<Placemark>
+			<name>Seruni 1</name>
+			<LookAt>
+				<longitude>104.0472895035332</longitude>
+				<latitude>1.133370611152743</latitude>
+				<altitude>0</altitude>
+				<heading>-5.47830385878638</heading>
+				<tilt>19.14021008941526</tilt>
+				<range>4014.321080470696</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.0427091754711,1.133561646641212,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Sekupang</name>
+			<LookAt>
+				<longitude>103.9495368687921</longitude>
+				<latitude>1.117010826383428</latitude>
+				<altitude>0</altitude>
+				<heading>-5.480199216066931</heading>
+				<tilt>14.1010250247853</tilt>
+				<range>4563.603858991944</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>103.9441319001806,1.113340876048243,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Batu Aji 3</name>
+			<LookAt>
+				<longitude>103.9695129925487</longitude>
+				<latitude>1.046335104980568</latitude>
+				<altitude>0</altitude>
+				<heading>-5.479827654980859</heading>
+				<tilt>14.10106221807092</tilt>
+				<range>4580.597440056414</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>103.962547134987,1.045533843859086,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Batam Center </name>
+			<styleUrl>#inline9</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.0511350250672,1.127003312051531,0 104.051314618488,1.127609840910752,0 104.0524905416196,1.127376309744323,0 104.0519950805434,1.123882770020804,0 104.0573797039616,1.123772209683993,0 104.0573417903695,1.123450735900161,0 104.0575925400898,1.123414106086096,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Simpang Franky</name>
+			<styleUrl>#inline16</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.0473527156707,1.119497025137838,0 104.0464223528757,1.117924601301431,0 104.0466880764788,1.117622746146689,0 104.0465291655341,1.117322307871527,0 104.046229017646,1.1173587084686,0 104.0455944424599,1.11674206047798,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Batu Aji 1</name>
+			<styleUrl>#inline8</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.0175895971541,1.063619024300379,0 104.0168580861189,1.063288068540843,0 104.0166092033679,1.063160481808401,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Batu Aji 2</name>
+			<styleUrl>#inline14</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					103.9852744660769,1.040482106282881,0 103.982092316121,1.042460681585159,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Batu Aji 2</name>
+			<LookAt>
+				<longitude>103.9970782106256</longitude>
+				<latitude>1.048992233639823</latitude>
+				<altitude>0</altitude>
+				<heading>-5.47931260035983</heading>
+				<tilt>14.10093028587445</tilt>
+				<range>4520.315816466693</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>103.9852959082409,1.040521967337903,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Batu Aji 1</name>
+			<LookAt>
+				<longitude>104.0212378696594</longitude>
+				<latitude>1.062158002673261</latitude>
+				<altitude>0</altitude>
+				<heading>-5.478870220708913</heading>
+				<tilt>14.10091510166202</tilt>
+				<range>4513.378808263647</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.0175769440178,1.063397477973685,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Simpang Franky</name>
+			<LookAt>
+				<longitude>104.0511698764491</longitude>
+				<latitude>1.120415237285311</latitude>
+				<altitude>0</altitude>
+				<heading>-5.478313103972011</heading>
+				<tilt>14.10099874639921</tilt>
+				<range>4551.597756721777</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.0473975432812,1.119447420968517,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Batam Center</name>
+			<LookAt>
+				<longitude>104.06043081896</longitude>
+				<latitude>1.123612511351629</latitude>
+				<altitude>0</altitude>
+				<heading>-5.478132294206222</heading>
+				<tilt>14.10104097347493</tilt>
+				<range>4570.888313384534</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.0547327426877,1.12390477556943,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Batu Aji 3</name>
+			<styleUrl>#inline46</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					103.9674345452347,1.045136949659956,0 103.9624889533714,1.045435773179395,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Batu Aji 4</name>
+			<styleUrl>#inline30</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					103.9556013814239,1.046493604793445,0 103.9542538948739,1.046802033761358,0 103.9535145501971,1.048145235951088,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Batu AJi 4</name>
+			<LookAt>
+				<longitude>103.9613791504569</longitude>
+				<latitude>1.048192127086434</latitude>
+				<altitude>0</altitude>
+				<heading>-5.479975437175899</heading>
+				<tilt>14.10104729101768</tilt>
+				<range>4573.778192557714</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>103.955595484159,1.046481234105005,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Sekupang</name>
+			<styleUrl>#inline1</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					103.9440550907245,1.113371565186724,0 103.9469738591288,1.111371306235366,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Seruni 1</name>
+			<styleUrl>#inline40</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.0426721331451,1.133429160560351,0 104.0380563802879,1.128821445502498,0 104.0317215638162,1.126092284641248,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Pengukuran Jalur</name>
+			<styleUrl>#inline5</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.0385883518301,1.129040129749316,0 104.0381102148125,1.128658504758068,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Seruni 2</name>
+			<description>Pekerjaan Seruni 2 hanya boring jalan untuk kabel main TJP - BTC, karena sebelumnya jumperan kabel main nyuntik di HDPE Linknet</description>
+			<LookAt>
+				<longitude>104.0401616431781</longitude>
+				<latitude>1.129020025416912</latitude>
+				<altitude>0</altitude>
+				<heading>-5.478285355098985</heading>
+				<tilt>19.14019536096093</tilt>
+				<range>1244.023114773083</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.0385998377745,1.129009786974875,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Simpang KDA</name>
+			<styleUrl>#inline36</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.0751734824063,1.099893701539205,0 104.077500345637,1.100100148758534,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Simpang KDA</name>
+			<LookAt>
+				<longitude>104.0772785884547</longitude>
+				<latitude>1.10374477497112</latitude>
+				<altitude>0</altitude>
+				<heading>-5.47770629448689</heading>
+				<tilt>19.15525922567307</tilt>
+				<range>4893.547309206929</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.0752210906732,1.099853242510445,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Simpang Bandara</name>
+			<styleUrl>#inline21</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.1045732900971,1.130370478568755,0 104.1064579034726,1.128853566167256,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Simpang Bandara</name>
+			<LookAt>
+				<longitude>104.1153941371968</longitude>
+				<latitude>1.136801291094326</latitude>
+				<altitude>0</altitude>
+				<heading>-5.476959954365176</heading>
+				<tilt>19.15525269347276</tilt>
+				<range>4891.331151402931</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.1047488846041,1.130344048173114,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Simpang Jam</name>
+			<styleUrl>#inline19</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.0204343345608,1.124902611772651,0 104.0184053188864,1.125229637068553,0 104.0173291823431,1.127688790960093,0 104.0169326413298,1.127572946043835,0 104.0174030202161,1.12506387431057,0 104.0173958004824,1.124423846461869,0 104.0170070401202,1.123506022669888,0 104.015388468926,1.12243467895955,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Simpang Jam</name>
+			<LookAt>
+				<longitude>104.0209388417617</longitude>
+				<latitude>1.124223233362549</latitude>
+				<altitude>0</altitude>
+				<heading>-5.478355929151419</heading>
+				<tilt>19.18583752366042</tilt>
+				<range>1508.021429481242</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.0173300784312,1.127653836106052,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Sekupang 2</name>
+			<styleUrl>#inline11</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					103.937381683846,1.119177580847983,0 103.9395630613382,1.116772549194352,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Sekupang 2</name>
+			<description>Hardbending Main TJP - BTC</description>
+			<LookAt>
+				<longitude>103.9413482901966</longitude>
+				<latitude>1.121478451973126</latitude>
+				<altitude>0</altitude>
+				<heading>-5.479900725073916</heading>
+				<tilt>19.19036715869273</tilt>
+				<range>3042.730708020602</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>103.9375681834674,1.119026173896802,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Simpang Bandara 2</name>
+			<styleUrl>#inline25</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.1056765313418,1.125601844781168,0 104.1036002667099,1.123184523650456,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Simpang Bandara 2</name>
+			<description>Div BTC- TJB</description>
+			<LookAt>
+				<longitude>104.1110557264864</longitude>
+				<latitude>1.13520594939221</latitude>
+				<altitude>0</altitude>
+				<heading>-5.476607861672866</heading>
+				<tilt>19.20271745693788</tilt>
+				<range>7227.119753518688</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.1056841071609,1.125540871698258,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Bemban</name>
+			<styleUrl>#inline44</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.1294469133778,1.146341524838998,0 104.1245361543148,1.142998416087819,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Bemban</name>
+			<LookAt>
+				<longitude>104.1339250947496</longitude>
+				<latitude>1.144651354786705</latitude>
+				<altitude>0</altitude>
+				<heading>-5.476156544428992</heading>
+				<tilt>19.20274453194768</tilt>
+				<range>7236.280275298142</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.1293414098464,1.146033014294524,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Simpang Kara</name>
+			<description>Diversity BTC - TJB</description>
+			<styleUrl>#inline0</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.0431856072247,1.113183928318482,0 104.0423776386599,1.11149935644679,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Simpang Kara</name>
+			<LookAt>
+				<longitude>104.0467655295446</longitude>
+				<latitude>1.113126477627532</latitude>
+				<altitude>0</altitude>
+				<heading>-5.477908376904603</heading>
+				<tilt>19.20267158336335</tilt>
+				<range>3969.495755387944</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.0431644427351,1.113068814234104,0</coordinates>
+			</Point>
+		</Placemark>
+		<Placemark>
+			<name>Kepri Mall</name>
+			<styleUrl>#inline26</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.0397748793092,1.103960660910918,0 104.0396571045132,1.103430861362851,0 104.0398936663793,1.10261833930825,0 104.0404312356565,1.101986109677433,0 104.0415866298165,1.101583858704294,0 104.0414251557959,1.101032111007596,0 104.0402097270645,1.101316917753517,0 104.0393182348833,1.101127787053876,0 104.0385914836507,1.100458813959338,0 104.0381008972671,1.099649508435382,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Pengukuran Jalur</name>
+			<styleUrl>#inline18</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+					104.0414498734919,1.100993102028709,0 104.0421790077571,1.100770303051023,0 
+				</coordinates>
+			</LineString>
+		</Placemark>
+		<Placemark>
+			<name>Kepri Mall</name>
+			<LookAt>
+				<longitude>104.0446515847527</longitude>
+				<latitude>1.102548992089638</latitude>
+				<altitude>0</altitude>
+				<heading>-5.478049359955718</heading>
+				<tilt>19.20645178260844</tilt>
+				<range>2335.985838391865</range>
+				<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>104.0413461696747,1.101711374522578,0</coordinates>
+			</Point>
+		</Placemark>
+	</Folder>
+</Document>
+</kml>
