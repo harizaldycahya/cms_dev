@@ -3,10 +3,48 @@
 
 @php
     $project = DB::table('project')->where('project_id', $project_id)->get()->first();
-    $segment = DB::table('segment')->where('segment_id', $segment_id)->get()->first();
-    $section = DB::table('section')->where('section_id', $section_id)->get()->first();
-    if(isset($sub_section)){
-        $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
+    $segment = DB::table('segment')->where('project_id', $project_id)->where('route_id', $route_id)->where('segment_id', $segment_id)->get()->first();
+    $section = DB::table('section')->where('project_id', $project_id)->where('route_id', $route_id)->where('segment_id', $segment_id)->where('section_id', $section_id)->get()->first();
+    
+    if ($type_id == '-') {
+        $sub_section = DB::table('sub_section')
+        ->where('route_id', $route_id)
+        ->where('segment_id', $segment_id)
+        ->where('section_id', $section_id)
+        ->where('sub_section_id', $sub_section_id)
+        ->where('customer_id', $customer_id)
+        ->get()
+        ->first();
+
+    } else {
+        $sub_section = DB::table('sub_section')
+        ->where('route_id', $route_id)
+        ->where('segment_id', $segment_id)
+        ->where('section_id', $section_id)
+        ->where('sub_section_id', $sub_section_id)
+        ->where('customer_id', $customer_id)
+        ->where('type_id', $type_id)
+        ->get()
+        ->first();
+    }
+    
+    
+    switch ($route_id) {
+        case '1':
+            $route_name = 'SUBMARINE';
+            break;
+        case '2':
+            $route_name = 'INLAND';
+            break;
+        case '3':
+            $route_name = 'LASTMILE';
+            break;
+        case '-':
+            $route_name = 'INLAND';
+            break;
+        default:
+            $route_name = 'UNDIFINED';
+            break;
     }
 @endphp
 
@@ -35,6 +73,10 @@
             background-color: #ECECFB;
             border: thin solid #333;
             border-left: none;
+        }
+        
+        .breadcrumb-item a{
+            color: lightblue;
         }
     </style>
 @endsection
@@ -83,45 +125,31 @@
 @endsection
 
 @section('breadcrumb')
-    <div class="card bg-light-info shadow-none position-relative overflow-hidden">
-        <div class="card-body px-4 py-5">
+    <div class="card bg-dark text-white shadow-lg position-relative overflow-hidden">
+        <div class="card-body px-5 py-5">
             <div class="row align-items-center">
                 <div class="col-9">
-                    @if (isset($sub_section_id))
-                        @php
-                            $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-                        @endphp
-                        <h3 class="fw-semibold" style="font-size: 2rem;"> Setup Core : {{$sub_section->sub_section_name}} <span style="text-transform: uppercase;">({{$sub_section->sub_owner}})</span></h3>
-                    @else
-                        <h3 class="fw-semibold" style="font-size: 2rem;"> Setup Core : {{$section->section_name}}</h3>
-                    @endif
-                    <hr>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
+                    <h3 class="fw-semibold text-white" style="font-size: 1.5rem; text-transform: uppercase;"> Sub Section : {{$sub_section->sub_section_name}} <span style="text-transform: uppercase;">({{DB::table('customer')->where('customer_id', $sub_section->customer_id)->get()->first()->customer_name}} {{$sub_section->type_id}})</span></h3>
+                    <h3 class="fw-semibold text-white" style="font-size: 1.8rem;">  UPLOAD SOR </h3>
+                    <nav aria-label="breadcrumb" class="mt-3">
+                        <ol class="breadcrumb" style="font-size: 1rem;">
                             <li class="breadcrumb-item">
                                 <a class="text-decoration-none" href="/">Dashboard</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project->project_id])}}">{{$project->project_name}}</a>
+                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project->project_id, 'route_id'=> '-' ])}}">{{$project->project_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('segment.show', ['project_id'=> $project->project_id, 'segment_id'=>$segment->segment_id])}}">{{$segment->segment_name}}</a>
+                                <a class="text-decoration-none" href="{{route('segment.show', ['project_id'=> $project->project_id, 'route_id'=> $route_id , 'segment_id'=>$segment->segment_id])}}">{{$segment->segment_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('section.show', ['project_id'=> $project->project_id, 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id])}}">{{$section->section_name}}</a>
+                                <a class="text-decoration-none" href="{{route('section.show', ['project_id'=> $project->project_id, 'route_id'=> $route_id , 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id])}}">{{$section->section_name}}</a>
                             </li>
-                            @if (isset($sub_section_id))
-                                @php
-                                    $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-                                @endphp
-                                <li class="breadcrumb-item" aria-current="page">
-                                    <a class="text-decoration-none" href="{{route('sub_section.show', ['project_id'=> $project->project_id, 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id, 'sub_section_id'=>$sub_section->sub_section_id])}}">
-                                        {{ $sub_section->sub_section_name}}
-                                    </a>
-                                </li>
-                            @endif
                             <li class="breadcrumb-item">
-                                Edit sub section
+                                <a class="text-decoration-none" href="{{route('sub_section.show', ['project_id'=>$project_id, 'route_id'=>$route_id, 'segment_id'=> $segment_id, 'section_id' => $section_id, 'customer_id'=> $sub_section->customer_id, 'type_id'=> $type_id, 'sub_section_id'=> $sub_section->sub_section_id])}}">{{$sub_section->sub_section_name}}</a>
+                            </li>
+                            <li class="breadcrumb-item" aria-current="page">
+                                    Upload SOR
                             </li>
                         </ol>
                     </nav>
@@ -136,12 +164,12 @@
     <form id="uploadForm" action="{{ route('sor.store') }}" method="POST" enctype="multipart/form-data">
         {{ csrf_field() }}
         <input hidden type="text" name="project_id" value="{{$project_id}}">
+        <input hidden type="text" name="route_id" value="{{$route_id}}">
         <input hidden type="text" name="segment_id" value="{{$segment_id}}">
         <input hidden type="text" name="section_id" value="{{$section_id}}">
-        @if(isset($sub_section_id))
-            <input hidden type="text" name="sub_section_id" value="{{$sub_section_id}}">
-        @endif
-        
+        <input hidden type="text" name="customer_id" value="{{$customer_id}}">
+        <input hidden type="text" name="type_id" value="{{$type_id}}">
+        <input hidden type="text" name="sub_section_id" value="{{$sub_section_id}}">
         <div class="col-12">
             <div class="card w-100 position-relative overflow-hidden mb-0">
                 <div class="card-body p-4">

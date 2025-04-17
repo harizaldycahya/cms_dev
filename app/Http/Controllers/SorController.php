@@ -23,65 +23,47 @@ use ZipArchive;
 
 class SorController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            // Block access if the user has the 'hashmicro' role
-            if (auth()->user()->role === 'hashmicro') {
-                abort(403, 'Unauthorized action.');
-            }
-
-            // Allow access for other roles
-            return $next($request);
-        });
-    }
     
-    
-    public function index($project_id, $segment_id, $section_id, $sub_section_id)
+    public function index($project_id, $route_id, $segment_id, $section_id, $sub_section_id)
     {
         if($sub_section_id == '-'){
             return view('sor.index')
             ->with('project_id', $project_id)
+            ->with('route_id', $route_id)
             ->with('segment_id', $segment_id)
             ->with('section_id', $section_id);
         }else{
             return view('sor.index')
             ->with('project_id', $project_id)
+            ->with('route_id', $route_id)
             ->with('segment_id', $segment_id)
             ->with('section_id', $section_id)
             ->with('sub_section_id', $sub_section_id);
         }
     }
 
-    public function create($project_id, $segment_id, $section_type, $section_id, $sub_section_id)
+    public function create($project_id, $route_id, $segment_id, $section_id, $customer_id, $type_id, $sub_section_id)
     { 
-        if($section_type == 'with_sub_section'){
-            return view('sor.create')
-            ->with('project_id',$project_id)
-            ->with('segment_id', $segment_id)
-            ->with('section_id', $section_id)
-            ->with('section_type', $section_type)
-            ->with('sub_section_id', $sub_section_id);
-        }else{
-            return view('sor.create')
-            ->with('project_id',$project_id)
-            ->with('segment_id', $segment_id)
-            ->with('section_id', $section_id)
-            ->with('section_type', $section_type);  
-        }
-
+        return view('sor.create')
+        ->with('project_id',$project_id)
+        ->with('route_id',$route_id)
+        ->with('segment_id', $segment_id)
+        ->with('section_id', $section_id)
+        ->with('customer_id', $customer_id)
+        ->with('type_id', $type_id)
+        ->with('sub_section_id', $sub_section_id);
     }
 
     public function store(Request $request){
 
         $project_id = $request->project_id;
+        $route_id = $request->route_id;
         $segment_id = $request->segment_id;
         $section_id = $request->section_id;
-        if(isset($request->sub_section_id)){
-            $sub_section_id = $request->sub_section_id;
-        }else{
-            $sub_section_id = '';
-        }
+        $customer_id = $request->customer_id;
+        $type_id = $request->type_id;
+        $sub_section_id = $request->sub_section_id;
+
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $mimeType = $file->getMimeType();
@@ -93,62 +75,34 @@ class SorController extends Controller
             if (!in_array($mimeType, $allowedMimeTypes)) {
                 return redirect()->back()->with('error', 'Error, System only accepts ZIP files !!');
             } else {
-
                 $currentDateTime = date('YmdHis');
                 $nik = auth()->user()->nik;
                 $randomNumber = mt_rand(100000, 999999);
                 
-                if(isset($request->sub_section_id)){
-                    $request_id = $nik.'.'.$request->project_id.'.'.$request->segment_id.'.'.$request->section_id.'.'.$request->sub_section_id.'.'.$currentDateTime. '.' . $randomNumber;
-                    $app_path = storage_path('app/public/draf_sor/'.$nik.'/'.$project_id.'/'.$segment_id.'/'.$section_id.'/'.$sub_section_id.'/'.$request_id);
-                    $file_original_name = $file->getClientOriginalName();
-                    $extension = pathinfo($file_original_name, PATHINFO_EXTENSION);
-        
-                    $file_upload = $request_id.".".$extension;
-                    if ($file->move($app_path, $file_upload)) {
-                        $draf_sor = DB::table('draf_sor')->insert([
-                            'request_id' => $request_id,
-                            'requestor' => $nik,
-                            'project_id' => $request->project_id,
-                            'segment_id' => $request->segment_id,
-                            'section_id' => $request->section_id,
-                            'sub_section_id' => $request->sub_section_id,
-                            'date' => now(),
-                            'status' => 'PROCESS',
-                        ]);
-
-                        return redirect()->route('sub_section.show', ['project_id'=>$request->project_id ,'project_type'=>$request->project_type, 'segment_id'=>$request->segment_id, 'section_id'=>$request->section_id, 'sub_section_id'=>$request->sub_section_id])->with('success', 'Data is successfully requested !');
-    
-
-                    } else {
-                        return redirect()->back()->with('error', 'Upload failed');
-                    }
+                $request_id = $nik.'.'.$project_id.'.'.$route_id.'.'.$segment_id.'.'.$section_id.'.'.$sub_section_id.'.'.$currentDateTime. '.' . $randomNumber;
+                $app_path = storage_path('app/public/sor_request/'.$nik.'/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id.'/'.$sub_section_id.'/'.$request_id);
+                $file_original_name = $file->getClientOriginalName();
+                $extension = pathinfo($file_original_name, PATHINFO_EXTENSION);
                 
-                }else{
-                    $request_id = $nik.'.'.$request->project_id.'.'.$request->segment_id.'.'.$request->section_id.'.'.$currentDateTime. '.' . $randomNumber;
-                    $app_path = storage_path('app/public/draf_sor/'.$nik.'/'.$project_id.'/'.$segment_id.'/'.$section_id.'/'.$request_id);
-                    $file_original_name = $file->getClientOriginalName();
-                    $extension = pathinfo($file_original_name, PATHINFO_EXTENSION);
-        
-                    $file_upload = $request_id.".".$extension;
-                    if ($file->move($app_path, $file_upload)) {
-                        $draf_sor = DB::table('draf_sor')->insert([
-                            'request_id' => $request_id,
-                            'requestor' => $nik,
-                            'project_id' => $request->project_id,
-                            'segment_id' => $request->segment_id,
-                            'section_id' => $request->section_id,
-                            'date' => now(),
-                            'status' => 'PROCESS',
-                        ]);
-
-                        return redirect()->route('section.show', ['project_id'=>$request->project_id ,'project_type'=>$request->project_type, 'segment_id'=>$request->segment_id, 'section_id'=>$request->section_id])->with('success', 'Data is successfully updated !');
-                        
-                    } else {
-                        return redirect()->back()->with('error', 'Upload failed');
-                    }
+                $file_upload = $request_id.".".$extension;
+                if ($file->move($app_path, $file_upload)) {
+                    $sor_request = DB::table('sor_request')->insert([
+                        'request_id' => $request_id,
+                        'requestor' => $nik,
+                        'project_id' => $request->project_id,
+                        'route_id' => $request->route_id,
+                        'segment_id' => $request->segment_id,
+                        'section_id' => $request->section_id,
+                        'sub_section_id' => $request->sub_section_id,
+                        'date' => now(),
+                        'status' => 'PROCESS',
+                    ]);
+                    
+                    return redirect()->route('section.show', ['project_id'=>$request->project_id ,'route_id'=>$request->route_id, 'segment_id'=>$request->segment_id, 'section_id'=>$request->section_id])->with('success', 'Data is successfully updated !');
+                    
+                } else {
+                    return redirect()->back()->with('error', 'Upload failed');
                 }
-
                 
             }
            
@@ -158,7 +112,7 @@ class SorController extends Controller
     }
 
     public function show($request_id){
-        $request = DB::table('draf_sor')
+        $request = DB::table('sor_request')
         ->where('request_id', $request_id)
         ->first();
 
@@ -167,34 +121,23 @@ class SorController extends Controller
     }
 
     public function process($request_id){
-        $draf_sor = DB::table('draf_sor')->where('request_id', $request_id)->first();
+        $sor_request = DB::table('sor_request')->where('request_id', $request_id)->first();
         
         
-        if(isset($draf_sor->sub_section_id)){
-            $file_path = storage_path('app/public/draf_sor/'.$draf_sor->requestor.'/'.$draf_sor->project_id.'/'.$draf_sor->segment_id.'/'.$draf_sor->section_id.'/'.$draf_sor->sub_section_id.'/'.$draf_sor->request_id.'/'.$draf_sor->request_id);
-        }else{
-            $file_path = storage_path('app/public/draf_sor/'.$draf_sor->requestor.'/'.$draf_sor->project_id.'/'.$draf_sor->segment_id.'/'.$draf_sor->section_id.'/'.$draf_sor->request_id.'/'.$draf_sor->request_id);
-        }
+        $file_path = storage_path('app/public/sor_request/'.$sor_request->requestor.'/'.$sor_request->project_id.'/'.$sor_request->route_id.'/'.$sor_request->segment_id.'/'.$sor_request->section_id.'/'.$sor_request->sub_section_id.'/'.$sor_request->request_id.'/'.$sor_request->request_id);
+        
         if (file_exists($file_path . '.zip')) {
             $zip = new ZipArchive();
             if ($zip->open($file_path . '.zip') === TRUE) {
-                if(isset($draf_sor->sub_section_id)){
-                    $folderPath = storage_path('app/public/draf_sor/'.$draf_sor->requestor . '/' . $draf_sor->project_id . '/' . $draf_sor->segment_id . '/' . $draf_sor->section_id.'/'.$draf_sor->sub_section_id.'/'. $draf_sor->request_id);
-                }else{
-                    $folderPath = storage_path('app/public/draf_sor/' . $draf_sor->requestor . '/' . $draf_sor->project_id . '/' . $draf_sor->segment_id . '/' . $draf_sor->section_id . '/' . $draf_sor->request_id);
-                }
-                
+                $folderPath = storage_path('app/public/sor_request/'.$sor_request->requestor . '/' . $sor_request->project_id .'/'.$sor_request->route_id. '/' . $sor_request->segment_id . '/' . $sor_request->section_id.'/'.$sor_request->sub_section_id.'/'. $sor_request->request_id);
+
                 $zip->extractTo($folderPath);
                 $zip->close();
-                
+
                 $files = glob($folderPath . '/*.sor');
                 foreach ($files as $file) {
                     $fileName = basename($file);
-                    if(isset($draf_sor->sub_section_id)){
-                        $path = storage_path('app/public/'.$draf_sor->project_id.'/'.$draf_sor->segment_id.'/'.$draf_sor->section_id.'/'.$draf_sor->sub_section_id.'/'.$fileName.'.sor');
-                    }else{
-                        $path = storage_path('app/public/'.$draf_sor->project_id.'/'.$draf_sor->segment_id.'/'.$draf_sor->section_id.'/'.$fileName.'.sor'); 
-                    }
+                    $path = storage_path('app/public/'.$sor_request->project_id.'/'.$sor_request->route_id.'/'.$sor_request->segment_id.'/'.$sor_request->section_id.'/'.$sor_request->sub_section_id.'/'.$fileName.'.sor');
                     
                     // $output = exec('cd ./jsotdr/lib/ && node test_drive.js '.$folderPath.'/'.$fileName);
                     $escapedFolderPath = escapeshellarg($folderPath);
@@ -221,19 +164,14 @@ class SorController extends Controller
                                 $loss_db_km = 0;
                             }
 
-                            if(isset($draf_sor->sub_section_id)){
-                                $sub_section_id = $draf_sor->sub_section_id;
-                            }else{
-                                $sub_section_id = null; 
-                            }
-                            
                             DB::table('draf_core')->insert([
                                     'request_id' => $request_id,
-                                    'project_id' => $draf_sor->project_id,
-                                    'segment_id' => $draf_sor->segment_id,
-                                    'section_id' => $draf_sor->section_id,
-                                    'sub_section_id' => $sub_section_id,
-                                    'core' => preg_replace('/[^0-9]/', '', $json_data["GenParams"]["fiber ID"]),
+                                    'project_id' => $sor_request->project_id,
+                                    'route_id' => $sor_request->route_id,
+                                    'segment_id' => $sor_request->segment_id,
+                                    'section_id' => $sor_request->section_id,
+                                    'sub_section_id' => $sor_request->sub_section_id,
+                                    'core' => str_pad(preg_replace('/[^0-9]/', '', $json_data["GenParams"]["fiber ID"]), 3, '0', STR_PAD_LEFT),
                                     'total_loss_db' => $json_data["KeyEvents"]["Summary"]["total loss"],
                                     'end_cable' => $json_data["KeyEvents"]["Summary"]["ORL finish"],
                                     'loss_db_km' => $loss_db_km,
@@ -259,26 +197,26 @@ class SorController extends Controller
             }
 
         } else {
-            return redirect()->back()->with('error', 'File not found.');
+            return redirect()->back()->with('error', 'File not found.'.storage_path('app/public/sor_request/'.$sor_request->requestor.'/'.$sor_request->project_id.'/'.$sor_request->route_id.'/'.$sor_request->segment_id.'/'.$sor_request->section_id.'/'.$sor_request->sub_section_id.'/'.$sor_request->request_id.'/'.$sor_request->request_id));
+            // return redirect()->back()->with('error', 'File not found.'.$sor_request->project_id);
         }
-    } 
-    
+    }
+   
     public function approval($request_id, $status){
         set_time_limit(0);
 
-        $draf_sor = DB::table('draf_sor')->where('request_id', $request_id)->first();
-        $section = DB::table('section')->where('section_id', $draf_sor->section_id)->get()->first();
-        if($draf_sor->sub_section_id == null){
-            $sub_section_id = '-';
-            $cores = DB::table('core')->where('project_id', $draf_sor->project_id)->where('segment_id', $draf_sor->segment_id)->where('section_id', $draf_sor->section_id)->get();
-            $path = storage_path('app/public/draf_sor/' . $draf_sor->requestor . '/' . $draf_sor->project_id . '/' . $draf_sor->segment_id . '/' . $draf_sor->section_id . '/' . $draf_sor->request_id);
-            $live_folder = storage_path('app/public/' . $draf_sor->project_id . '/' . $draf_sor->segment_id . '/' . $draf_sor->section_id);
-        }else{
-            $sub_section_id = $draf_sor->sub_section_id;
-            $cores = DB::table('core')->where('project_id', $draf_sor->project_id)->where('segment_id', $draf_sor->segment_id)->where('section_id', $draf_sor->section_id)->where('sub_section_id', $draf_sor->sub_section_id)->get();
-            $path = storage_path('app/public/draf_sor/' . $draf_sor->requestor . '/' . $draf_sor->project_id . '/' . $draf_sor->segment_id . '/' . $draf_sor->section_id . '/'. $draf_sor->sub_section_id . '/' . $draf_sor->request_id);
-            $live_folder = storage_path('app/public/' . $draf_sor->project_id . '/' . $draf_sor->segment_id . '/' . $draf_sor->section_id. '/' . $draf_sor->sub_section_id);
-        }
+        
+        $sor_request = DB::table('sor_request')->where('request_id', $request_id)->first();
+        $project_id = $sor_request->project_id;
+        $route_id = $sor_request->route_id;
+        $segment_id = $sor_request->segment_id;
+        $section_id = $sor_request->section_id;
+        $sub_section_id = $sor_request->sub_section_id;
+
+        $cores = DB::table('core')->where('project_id', $project_id)->where('route_id', $route_id)->where('segment_id', $segment_id)->where('section_id', $section_id)->where('sub_section_id', $sub_section_id)->get();
+        $path = storage_path('app/public/sor_request/' . $sor_request->requestor . '/' . $sor_request->project_id .'/'.$sor_request->route_id. '/' . $sor_request->segment_id . '/' . $sor_request->section_id .'/' . $sor_request->sub_section_id . '/' . $sor_request->request_id);
+        $live_folder = storage_path('app/public/' . $sor_request->project_id .'/'.$sor_request->route_id. '/' . $sor_request->segment_id . '/' . $sor_request->section_id. '/' . $sor_request->sub_section_id);
+        
         $draf_cores = DB::table('draf_core')->where('request_id', $request_id)->get();
 
         if($status == 'APPROVE'){
@@ -286,6 +224,8 @@ class SorController extends Controller
             foreach($draf_cores as $draf_core){
                 foreach($cores as $core){
                     if ($draf_core->core == $core->core) {
+
+                            $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
                             // Get all .json files in the directory
                             $json_files = glob($path . '/*.json');
 
@@ -303,7 +243,7 @@ class SorController extends Controller
                                     if ($fiber_id == $core->core) {
                                         
                                         // Define the new file name using core_id
-                                        $new_file_name = $fiber_id;
+                                        $new_file_name = str_pad($fiber_id, 3, '0', STR_PAD_LEFT);
                                         
                                         // Define paths for the .json and .sor files
                                         $new_json_file = $path . '/' . $new_file_name . '.sor.json';
@@ -348,51 +288,28 @@ class SorController extends Controller
                                         if (is_file($new_sor_file)) {
                                             $live_sor_file = $live_folder . '/' . basename($new_sor_file);
                                             if (rename($new_sor_file, $live_sor_file)) {
-                                                if($sub_section_id == '-'){
-                                                    if($draf_core->end_cable != null || $draf_core->end_cable != ''){
-                                                        if($draf_core->end_cable >= $section->actual_length){
-                                                            if($draf_core->total_loss_db <= $section->actual_max_total_loss){
-                                                                $actual_remarks = 'OK';
-                                                            }else{
-                                                                $actual_remarks = 'NOT OK';
-                                                            }
+                                                if($draf_core->end_cable != null || $draf_core->end_cable != ''){
+                                                    if($draf_core->end_cable >= $sub_section->sub_actual_length ){
+                                                        if($draf_core->total_loss_db <= $sub_section->sub_actual_max_total_loss){
+                                                            $actual_remarks = 'OK';
                                                         }else{
                                                             $actual_remarks = 'NOT OK';
                                                         }
                                                     }else{
                                                         $actual_remarks = 'NOT OK';
                                                     }
-                                                    $update_sor = DB::table('core')->where('section_id',$draf_core->section_id)->where('core', $core->core)->update([
-                                                        'actual_end_cable' => $draf_core->end_cable,
-                                                        'actual_total_loss_db' => $draf_core->total_loss_db,
-                                                        'actual_loss_db_km' => $draf_core->loss_db_km,
-                                                        'notes' => $draf_core->tanggal,
-                                                        'actual_remarks' => $actual_remarks
-                                                    ]);
                                                 }else{
-                                                    $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-                                                    if($draf_core->end_cable != null || $draf_core->end_cable != ''){
-                                                        if($draf_core->end_cable >= $sub_section->sub_actual_length ){
-                                                            if($draf_core->total_loss_db <= $sub_section->sub_actual_max_total_loss){
-                                                                $actual_remarks = 'OK';
-                                                            }else{
-                                                                $actual_remarks = 'NOT OK';
-                                                            }
-                                                        }else{
-                                                            $actual_remarks = 'NOT OK';
-                                                        }
-                                                    }else{
-                                                        $actual_remarks = 'NOT OK';
-                                                    }
-
-                                                    $update_sor = DB::table('core')->where('sub_section_id',$draf_core->sub_section_id)->where('core', $core->core)->update([
-                                                        'actual_end_cable' => $draf_core->end_cable,
-                                                        'actual_total_loss_db' => $draf_core->total_loss_db,
-                                                        'actual_loss_db_km' => $draf_core->loss_db_km,
-                                                        'notes' => $draf_core->tanggal,
-                                                        'actual_remarks' => $actual_remarks
-                                                    ]);
+                                                    $actual_remarks = 'NOT OK';
                                                 }
+
+                                                $update_sor = DB::table('core')->where('sub_section_id',$sub_section_id)->where('core', $core->core)->update([
+                                                    'actual_end_cable' => $draf_core->end_cable,
+                                                    'actual_total_loss_db' => $draf_core->total_loss_db,
+                                                    'actual_loss_db_km' => $draf_core->loss_db_km,
+                                                    'notes' => $draf_core->tanggal,
+                                                    'actual_remarks' => $actual_remarks
+                                                    // 'actual_remarks' => "TEST"
+                                                ]);
                                                 
                                                 if($update_sor){
                                                     echo 'data berhasil masuk-'.$core->core_id.'-testing';
@@ -414,39 +331,27 @@ class SorController extends Controller
             }
             
 
-            DB::table('draf_sor')->where('request_id', $request_id)->update([
+            DB::table('sor_request')->where('request_id', $request_id)->update([
                 'status' => 'APPROVE',
             ]);
 
-            if($draf_sor->sub_section_id == null){
-                return redirect()
-                ->route('section.show', ['project_id'=>$draf_sor->project_id, 'project_type'=>$section->cable_category, 'segment_id'=> $draf_sor->segment_id, 'section_id' => $draf_sor->section_id])
-                ->with('success', 'Request is successfully approved !');   
-            }else{
-                return redirect()
-                ->route('sub_section.show', ['project_id'=>$draf_sor->project_id, 'project_type'=>$section->cable_category, 'segment_id'=> $draf_sor->segment_id, 'section_id' => $draf_sor->section_id, 'sub_section_id'=> $sub_section_id])
-                ->with('success', 'Request is successfully approved !');   
-            }
-            
+            return redirect()
+            ->route('section.show', ['project_id'=>$sor_request->project_id, 'route_id'=>$sor_request->route_id, 'segment_id'=> $sor_request->segment_id, 'section_id' => $sor_request->section_id])
+            ->with('success', 'Request is successfully approved !');   
 
         }else{
-            DB::table('draf_sor')->where('request_id', $request_id)->update([
+            DB::table('sor_request')->where('request_id', $request_id)->update([
                 'status' => 'REJECT',
             ]);
 
-            if($draf_sor->sub_section_id == null){
-                return redirect()
-                ->route('section.show', ['project_id'=>$draf_sor->project_id, 'project_type'=>$section->cable_category, 'segment_id'=> $draf_sor->segment_id, 'section_id' => $draf_sor->section_id])
-                ->with('success', 'Request is successfully rejected !');   
-            }else{
-                return redirect()
-                ->route('sub_section.show', ['project_id'=>$draf_sor->project_id, 'project_type'=>$section->cable_category, 'segment_id'=> $draf_sor->segment_id, 'section_id' => $draf_sor->section_id, 'sub_section_id'=> $sub_section_id])
-                ->with('success', 'Request is successfully rejected !');   
-            }
+            return redirect()
+            ->route('section.show', ['project_id'=>$sor_request->project_id, 'route_id'=>$sor_request->route_id, 'segment_id'=> $sor_request->segment_id, 'section_id' => $sor_request->section_id])
+            ->with('success', 'Request is successfully rejected !');   
+            
         }
     }
 
-    public function summary($project_id, $segment_id, $section_id, $sub_section_id){
+    public function summary($project_id,$route_id, $segment_id, $section_id, $sub_section_id){
 
         function findIndex($array, $key, $value) {
             foreach ($array as $index => $item) {
@@ -457,449 +362,220 @@ class SorController extends Controller
             return null; // Return null if not found
         }
 
-        if($sub_section_id == '-'){
-            $section = DB::table('section')->where('project_id', $project_id)->where('segment_id', $segment_id)->where('section_id', $section_id)->first();
+        $section = DB::table('section')->where('project_id', $project_id)->where('route_id', $route_id)->where('segment_id', $segment_id)->where('section_id', $section_id)->first();
 
-            $path = storage_path('app/public/'.$project_id.'/'.$segment_id.'/'.$section_id);
+        $path_raw = 'app/public/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id.'/'.$sub_section_id.'/';
+        $path = storage_path($path_raw);
 
-            if (File::exists($path)) {
-                $files = File::files($path);
+        if (File::exists($path)) {
+            $files = File::files($path);
 
-                $jsonSorFiles = array_filter($files, function ($file) {
-                    return substr($file->getFilename(), -9) === '.sor.json';
+            $jsonSorFiles = array_filter($files, function ($file) {
+                return substr($file->getFilename(), -9) === '.sor.json';
+            });
+
+            foreach ($jsonSorFiles as $file) {
+                $json = file_get_contents(storage_path($path_raw.$file->getFilename()));
+                $json_data = json_decode($json,true); 
+
+                array_shift($json_data["KeyEvents"]);
+
+                foreach ($json_data['KeyEvents'] as $eventName => $eventData) {
+                    if ($eventName !== "Summary") {
+                        // $eventData['fiber_id'] = $json_data['GenParams']['fiber ID'];
+                        $eventData['fiber_id'] = preg_replace('/[^0-9]/', '', $json_data['GenParams']['fiber ID']);
+                        $eventData['wavelength'] = $json_data['GenParams']['wavelength'];
+                        $eventData['total loss'] = $json_data['KeyEvents']['Summary']['total loss'];
+                        $eventData['loss end'] = $json_data['KeyEvents']['Summary']['loss end'];
+                        $allData[] = $eventData;
+                    }
+                }
+            }
+
+            // Sort the data by distance in ascending order
+            // usort($allData, function ($a, $b) {
+            //     return $a['distance'] <=> $b['distance'];
+            // });
+            // Ensure $allData is defined
+            $allData = $allData ?? [];  // This ensures $allData is initialized as an empty array if it's null or undefined
+
+            // Check if $allData is an array and not empty
+            if (is_array($allData) && !empty($allData)) {
+                usort($allData, function ($a, $b) {
+                    return $a['distance'] <=> $b['distance'];
                 });
-    
-                foreach ($jsonSorFiles as $file) {
-                    $json = file_get_contents(storage_path('app/public/'.$project_id.'/'.$segment_id.'/'.$section_id.'/'.$file->getFilename()));
-                    $json_data = json_decode($json,true); 
-    
-                    array_shift($json_data["KeyEvents"]);
-    
-                    
-    
-                    foreach ($json_data['KeyEvents'] as $eventName => $eventData) {
-                        if ($eventName !== "Summary") {
-                            // $eventData['fiber_id'] = $json_data['GenParams']['fiber ID'];
-                            $eventData['fiber_id'] = preg_replace('/[^0-9]/', '', $json_data['GenParams']['fiber ID']);
-                            $eventData['wavelength'] = $json_data['GenParams']['wavelength'];
-                            $eventData['total loss'] = $json_data['KeyEvents']['Summary']['total loss'];
-                            $eventData['loss end'] = $json_data['KeyEvents']['Summary']['loss end'];
-                            $allData[] = $eventData;
-                        }
-                    }
-                }
-    
-                // Sort the data by distance in ascending order
-                // usort($allData, function ($a, $b) {
-                //     return $a['distance'] <=> $b['distance'];
-                // });
-                // Ensure $allData is defined
-                $allData = $allData ?? [];  // This ensures $allData is initialized as an empty array if it's null or undefined
-
-                // Check if $allData is an array and not empty
-                if (is_array($allData) && !empty($allData)) {
-                    usort($allData, function ($a, $b) {
-                        return $a['distance'] <=> $b['distance'];
-                    });
-                } else {
-                    // Return or echo an error message
-                    return redirect()->back()->with('error', 'Error, Data is empty.');
-                }
-    
-                // Group distances based on their values with a difference less than 0.1
-                $output = [];
-                $group = [];
-                $prevDistance = null;
-    
-                foreach ($allData as $item) {
-                    $distance = $item['distance'];
-                    $spliceLoss = $item['splice loss'];
-                    $fiberId = $item['fiber_id'];
-                    $wavelength = $item['wavelength'];
-                    $total_loss = $item['total loss'];
-                    $loss_end = $item['loss end'];
-    
-                    if ($prevDistance === null || $distance - $prevDistance <= 0.1) {
-                        // Add the distance, splice loss, fiber ID, and wavelength to the current group if it's the first distance or the difference is less than 0.1
-                        $group['distances'][] = $distance;
-                        $group['splice_losses'][] = $spliceLoss;
-                        $group['fiber_ids'][] = $fiberId;
-                        $group['wavelengths'][] = $wavelength;
-                        $group['total_loss'][] = $total_loss;
-                        $group['loss_end'][] = $loss_end;
-                    } else {
-                        // Start a new group
-                        $output[] = $group;
-                        $group = [
-                            'distances' => [$distance],
-                            'splice_losses' => [$spliceLoss],
-                            'fiber_ids' => [$fiberId],
-                            'wavelengths' => [$wavelength],
-                            'total_loss' => [$total_loss],
-                            'loss_end' => [$loss_end]
-                        ];
-                    }
-                    $prevDistance = $distance;
-    
-                }
-    
-                // Add the last group
-                if (!empty($group)) {
-                    $output[] = $group;
-                }
-    
-                // Calculate the average of each index, splice loss, and fiber ID for each group
-                $averages = array_map(function ($group) {
-                    $distanceSum = array_sum($group['distances']);
-                    $spliceLossSum = array_sum($group['splice_losses']);
-                    $count = count($group['distances']);
-                    $averageDistance = $distanceSum / $count;
-                    $averageSpliceLoss = $spliceLossSum / $count;
-    
-                    // Combine fiber IDs, wavelengths, and splice losses into a single array
-                    $combinedData = [];
-                    for ($i = 0; $i < $count; $i++) {
-                        $combinedData[] = [
-                            'fiber_id' => $group['fiber_ids'][$i],
-                            'wavelength' => $group['wavelengths'][$i],
-                            'splice_loss' => $group['splice_losses'][$i],
-                            'total_loss' => $group['total_loss'][$i],
-                            'loss_end' => $group['loss_end'][$i]
-                        ];
-                    }
-    
-                    // Sort combined_data based on fiber_id
-                    usort($combinedData, function ($a, $b) {
-                        return $a['fiber_id'] <=> $b['fiber_id'];
-                    });
-    
-                    return [
-                        'distances' => $group['distances'],
-                        'average_distance' => $averageDistance,
-                        'combined_data' => $combinedData, // Combined fiber IDs, wavelengths, and splice losses
-                        'average_splice_loss' => $averageSpliceLoss,
-                    ];
-                }, $output);
-    
-                $spreadsheet = new Spreadsheet();
-                $sheet = $spreadsheet->getActiveSheet();
-                
-                $styleArray = [
-                    'font' => [
-                        'bold'  =>  true,
-                        'size'  =>  14,
-                        'name'  =>  'Arial'
-                    ]
-                ];
-    
-                // $sheet->setCellValue('B5', 'File');
-                $sheet->setCellValue('C5', 'Fiber');
-                $sheet->setCellValue('D5', 'Wavelength');
-                $sheet->setCellValue('E5', 'Loss dB');
-                $sheet->setCellValue('F5', 'Length, km');
-                $sheet->setCellValue('G5', 'Attenuation');
-    
-                $loopCount = count($averages); // Number of times you want to loop
-                $lastRow = count($jsonSorFiles);
-                $startColumn = 'H'; // Starting column
-    
-                // Function to get the next column
-                function getNextColumn($col) {
-                    return ++$col;
-                }
-                
-                // Loop for the desired number of iterations
-                for ($loop = 0; $loop < $loopCount; $loop++) {
-                    $currentColumn = $startColumn; // Initialize current column
-                    // Loop through columns and rows
-                    for ($col = $startColumn; $col != getNextColumn($startColumn); $col++) {
-                        $sheet->setCellValue($col.'5', number_format((float) $averages[$loop]['average_distance'], 3, '.', '' )); // Set value for each cell in the column
-                    }
-                    // Calculate the next starting column
-                    $startColumn = getNextColumn($currentColumn);
-                }
-    
-                $jumlah_averages = count($averages);
-                $jumlah_file = count($jsonSorFiles);
-                $awalColumn = 'C'; // Starting column
-                $kun = -5;
-                for($x = 0; $x < $jumlah_averages + 5; $x++){
-                    $sekarangColumn = $awalColumn;
-                    
-                    for ($y = $awalColumn; $y != getNextColumn($awalColumn); $y++) {
-                        $test = 0;
-                        for ($row = 6; $row <= $jumlah_file + 5; $row++) {
-                            
-                            $cell = $y . $row; // Form the cell reference
-                            switch ($y) {
-                                case 'C':
-                                    $sheet->setCellValue($cell, 'Core'.$averages[0]['combined_data'][$test]["fiber_id"]); // Set value for each cell in the column
-                                    break;
-                                case 'D':
-                                    $sheet->setCellValue($cell, $averages[0]['combined_data'][$test]["wavelength"]); // Set value for each cell in the column
-                                    break;
-                                case 'E':
-                                    $sheet->setCellValue($cell, number_format((float) $averages[0]['combined_data'][$test]["total_loss"], 3, '.', '' )); // Set value for each cell in the column
-                                    break;
-                                case 'F':
-                                    $sheet->setCellValue($cell, number_format((float) $averages[0]['combined_data'][$test]["loss_end"], 3, '.', '' )); // Set value for each cell in the column
-                                    break;
-                                case 'G':
-                                    $sheet->setCellValue($cell, $averages[0]['combined_data'][$test]["loss_end"] == 0 ? '-' : number_format((float) ($averages[0]['combined_data'][$test]["total_loss"] / $averages[0]['combined_data'][$test]["loss_end"]), 3, '.', '' )); // Set value for each cell in the column
-                                    break;
-                                default:
-        
-                                        $current_row_fiber_id = $spreadsheet->getActiveSheet()->getCell('C'.$row)->getValue();
-                                        $index = findIndex($averages[$kun]['combined_data'], 'fiber_id',  preg_replace('/[^0-9]/', '', $current_row_fiber_id));
-                                        
-                                        if($index != ""){
-                                            $sheet->setCellValue($cell, $averages[$kun]['combined_data'][$index]['splice_loss']); // Set value for each cell in the column
-                                            
-                                        }
-                                    
-                                break;
-                            }
-                            $test++;
-                            
-                        }
-                        
-                    }
-        
-                    $awalColumn = getNextColumn($sekarangColumn);
-                    $kun++;
-                }
-    
-                $writer = new Xlsx($spreadsheet); // Create a new Xlsx object
-    
-                $writer->save($section->section_name.".xlsx");
-                header("Content-Type: application/vnd.ms-excel");
-                return redirect($section->section_name.".xlsx");
             } else {
-                return redirect()->back()->with('error', 'No file sor is found !');
+                // Return or echo an error message
+                return redirect()->back()->with('error', 'Error, Data is empty.');
+            }
+
+            // Group distances based on their values with a difference less than 0.1
+            $output = [];
+            $group = []; 
+            $prevDistance = null;
+
+            foreach ($allData as $item) {
+               $distance = $item['distance'];
+                $spliceLoss = $item['splice loss'];
+                $fiberId = $item['fiber_id'];
+                $wavelength = $item['wavelength'];
+                $total_loss = $item['total loss'];
+                $loss_end = $item['loss end'];
+
+                if ($prevDistance === null || $distance - $prevDistance <= 0.1) {
+                    // Add the distance, splice loss, fiber ID, and wavelength to the current group if it's the first distance or the difference is less than 0.1
+                    $group['distances'][] = $distance;
+                    $group['splice_losses'][] = $spliceLoss;
+                    $group['fiber_ids'][] = $fiberId;
+                    $group['wavelengths'][] = $wavelength;
+                    $group['total_loss'][] = $total_loss;
+                    $group['loss_end'][] = $loss_end;
+                } else {
+                    // Start a new group
+                    $output[] = $group;
+                    $group = [
+                        'distances' => [$distance],
+                        'splice_losses' => [$spliceLoss],
+                        'fiber_ids' => [$fiberId],
+                        'wavelengths' => [$wavelength],
+                        'total_loss' => [$total_loss],
+                        'loss_end' => [$loss_end]
+                    ];
+                }
+                $prevDistance = $distance;
+
+            }
+
+            // Add the last group
+            if (!empty($group)) {
+                $output[] = $group;
+            }
+
+            // Calculate the average of each index, splice loss, and fiber ID for each group
+            $averages = array_map(function ($group) {
+                $distanceSum = array_sum($group['distances']);
+                $spliceLossSum = array_sum($group['splice_losses']);
+                $count = count($group['distances']);
+                $averageDistance = $distanceSum / $count;
+                $averageSpliceLoss = $spliceLossSum / $count;
+                // Combine fiber IDs, wavelengths, and splice losses into a single array
+                $combinedData = [];
+                for ($i = 0; $i < $count; $i++) {
+                    $combinedData[] = [
+                        'fiber_id' => $group['fiber_ids'][$i],
+                        'wavelength' => $group['wavelengths'][$i],
+                        'splice_loss' => $group['splice_losses'][$i],
+                        'total_loss' => $group['total_loss'][$i],
+                        'loss_end' => $group['loss_end'][$i]
+                    ];
+                }
+
+                // Sort combined_data based on fiber_id
+                usort($combinedData, function ($a, $b) {
+                    return $a['fiber_id'] <=> $b['fiber_id'];
+                });
+
+                return [
+                    'distances' => $group['distances'],
+                    'average_distance' => $averageDistance,
+                    'combined_data' => $combinedData, // Combined fiber IDs, wavelengths, and splice losses
+                    'average_splice_loss' => $averageSpliceLoss,
+                ];
+            }, $output);
+
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            $styleArray = [
+                'font' => [
+                    'bold'  =>  true,
+                    'size'  =>  14,
+                    'name'  =>  'Arial'
+                ]
+            ];
+
+            // $sheet->setCellValue('B5', 'File');
+            $sheet->setCellValue('C5', 'Fiber');
+            $sheet->setCellValue('D5', 'Wavelength');
+            $sheet->setCellValue('E5', 'Loss dB');
+            $sheet->setCellValue('F5', 'Length, km');
+            $sheet->setCellValue('G5', 'Attenuation');
+
+            $loopCount = count($averages); // Number of times you want to loop
+            $lastRow = count($jsonSorFiles);
+            $startColumn = 'H'; // Starting column
+
+            // Function to get the next column
+            function getNextColumn($col) {
+                return ++$col;
             }
             
+            // Loop for the desired number of iterations
+            for ($loop = 0; $loop < $loopCount; $loop++) {
+                $currentColumn = $startColumn; // Initialize current column
+                // Loop through columns and rows
+                for ($col = $startColumn; $col != getNextColumn($startColumn); $col++) {
+                    $sheet->setCellValue($col.'5', number_format((float) $averages[$loop]['average_distance'], 3, '.', '' )); // Set value for each cell in the column
+                }
+                // Calculate the next starting column
+                $startColumn = getNextColumn($currentColumn);
+            }
 
-        }else{
-            $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-            $section = DB::table('section')->where('project_id', $project_id)->where('segment_id', $segment_id)->where('section_id', $section_id)->first();
-
-            $path = storage_path('app/public/'.$project_id.'/'.$segment_id.'/'.$section_id.'/'.$sub_section_id);
-            
-            if (File::exists($path)) {
-                $files = File::files($path);
-
-                $jsonSorFiles = array_filter($files, function ($file) {
-                    return substr($file->getFilename(), -9) === '.sor.json';
-                });
-    
-                foreach ($jsonSorFiles as $file) {
-                    $json = file_get_contents(storage_path('app/public/'.$project_id.'/'.$segment_id.'/'.$section_id.'/'.$sub_section_id.'/'.$file->getFilename()));
-                    $json_data = json_decode($json,true); 
-    
-                    array_shift($json_data["KeyEvents"]);
-    
-                    
-    
-                    foreach ($json_data['KeyEvents'] as $eventName => $eventData) {
-                        if ($eventName !== "Summary") {
-                            // $eventData['fiber_id'] = $json_data['GenParams']['fiber ID'];
-                            $eventData['fiber_id'] = preg_replace('/[^0-9]/', '', $json_data['GenParams']['fiber ID']);
-                            $eventData['wavelength'] = $json_data['GenParams']['wavelength'];
-                            $eventData['total loss'] = $json_data['KeyEvents']['Summary']['total loss'];
-                            $eventData['loss end'] = $json_data['KeyEvents']['Summary']['loss end'];
-                            $allData[] = $eventData;
-                        }
-                    }
-                }
-    
-                // Sort the data by distance in ascending order
-                // usort($allData, function ($a, $b) {
-                //     return $a['distance'] <=> $b['distance'];
-                // });
-                // Ensure $allData is defined
-                $allData = $allData ?? [];  // This ensures $allData is initialized as an empty array if it's null or undefined
-
-                // Check if $allData is an array and not empty
-                if (is_array($allData) && !empty($allData)) {
-                    usort($allData, function ($a, $b) {
-                        return $a['distance'] <=> $b['distance'];
-                    });
-                } else {
-                    // Return or echo an error message
-                    return redirect()->back()->with('error', 'Error, Data is empty.');
-                }
-    
-                // Group distances based on their values with a difference less than 0.1
-                $output = [];
-                $group = [];
-                $prevDistance = null;
-    
-                foreach ($allData as $item) {
-                    $distance = $item['distance'];
-                    $spliceLoss = $item['splice loss'];
-                    $fiberId = $item['fiber_id'];
-                    $wavelength = $item['wavelength'];
-                    $total_loss = $item['total loss'];
-                    $loss_end = $item['loss end'];
-    
-                    if ($prevDistance === null || $distance - $prevDistance <= 0.1) {
-                        // Add the distance, splice loss, fiber ID, and wavelength to the current group if it's the first distance or the difference is less than 0.1
-                        $group['distances'][] = $distance;
-                        $group['splice_losses'][] = $spliceLoss;
-                        $group['fiber_ids'][] = $fiberId;
-                        $group['wavelengths'][] = $wavelength;
-                        $group['total_loss'][] = $total_loss;
-                        $group['loss_end'][] = $loss_end;
-                    } else {
-                        // Start a new group
-                        $output[] = $group;
-                        $group = [
-                            'distances' => [$distance],
-                            'splice_losses' => [$spliceLoss],
-                            'fiber_ids' => [$fiberId],
-                            'wavelengths' => [$wavelength],
-                            'total_loss' => [$total_loss],
-                            'loss_end' => [$loss_end]
-                        ];
-                    }
-                    $prevDistance = $distance;
-    
-                }
-    
-                // Add the last group
-                if (!empty($group)) {
-                    $output[] = $group;
-                }
-    
-                // Calculate the average of each index, splice loss, and fiber ID for each group
-                $averages = array_map(function ($group) {
-                    $distanceSum = array_sum($group['distances']);
-                    $spliceLossSum = array_sum($group['splice_losses']);
-                    $count = count($group['distances']);
-                    $averageDistance = $distanceSum / $count;
-                    $averageSpliceLoss = $spliceLossSum / $count;
-    
-                    // Combine fiber IDs, wavelengths, and splice losses into a single array
-                    $combinedData = [];
-                    for ($i = 0; $i < $count; $i++) {
-                        $combinedData[] = [
-                            'fiber_id' => $group['fiber_ids'][$i],
-                            'wavelength' => $group['wavelengths'][$i],
-                            'splice_loss' => $group['splice_losses'][$i],
-                            'total_loss' => $group['total_loss'][$i],
-                            'loss_end' => $group['loss_end'][$i]
-                        ];
-                    }
-    
-                    // Sort combined_data based on fiber_id
-                    usort($combinedData, function ($a, $b) {
-                        return $a['fiber_id'] <=> $b['fiber_id'];
-                    });
-    
-                    return [
-                        'distances' => $group['distances'],
-                        'average_distance' => $averageDistance,
-                        'combined_data' => $combinedData, // Combined fiber IDs, wavelengths, and splice losses
-                        'average_splice_loss' => $averageSpliceLoss,
-                    ];
-                }, $output);
-    
-                $spreadsheet = new Spreadsheet();
-                $sheet = $spreadsheet->getActiveSheet();
+            $jumlah_averages = count($averages);
+            $jumlah_file = count($jsonSorFiles);
+            $awalColumn = 'C'; // Starting column
+            $kun = -5;
+            for($x = 0; $x < $jumlah_averages + 5; $x++){
+                $sekarangColumn = $awalColumn;
                 
-                $styleArray = [
-                    'font' => [
-                        'bold'  =>  true,
-                        'size'  =>  14,
-                        'name'  =>  'Arial'
-                    ]
-                ];
-                
-                $sheet->setCellValue('C5', 'Fiber');
-                $sheet->setCellValue('D5', 'Wavelength');
-                $sheet->setCellValue('E5', 'Loss dB');
-                $sheet->setCellValue('F5', 'Length, km');
-                $sheet->setCellValue('G5', 'Attenuation');
-    
-                $loopCount = count($averages); // Number of times you want to loop
-                $lastRow = count($jsonSorFiles);
-                $startColumn = 'H'; // Starting column
-                
-                // Function to get the next column
-                function getNextColumn($col) {
-                    return ++$col;
-                }
-                
-                // Loop for the desired number of iterations
-                for ($loop = 0; $loop < $loopCount; $loop++) {
-                    $currentColumn = $startColumn; // Initialize current column
-                    // Loop through columns and rows
-                    for ($col = $startColumn; $col != getNextColumn($startColumn); $col++) {
-                        $sheet->setCellValue($col.'5', number_format((float) $averages[$loop]['average_distance'], 3, '.', '' )); // Set value for each cell in the column
-                    }
-                    // Calculate the next starting column
-                    $startColumn = getNextColumn($currentColumn);
-                }
-    
-                $jumlah_averages = count($averages);
-                $jumlah_file = count($jsonSorFiles);
-                $awalColumn = 'C'; // Starting column
-                $kun = -5;
-                for($x = 0; $x < $jumlah_averages + 5; $x++){
-                    $sekarangColumn = $awalColumn;
-                    
-                    for ($y = $awalColumn; $y != getNextColumn($awalColumn); $y++) {
-                        $test = 0;
-                        for ($row = 6; $row <= $jumlah_file + 5; $row++) {
-                            
-                            $cell = $y . $row; // Form the cell reference
-                            switch ($y) {
-                                case 'C':
-                                    $sheet->setCellValue($cell, 'Core'.$averages[0]['combined_data'][$test]["fiber_id"]); // Set value for each cell in the column
-                                    break;
-                                case 'D':
-                                    $sheet->setCellValue($cell, $averages[0]['combined_data'][$test]["wavelength"]); // Set value for each cell in the column
-                                    break;
-                                case 'E':
-                                    $sheet->setCellValue($cell, number_format((float) $averages[0]['combined_data'][$test]["total_loss"], 3, '.', '' )); // Set value for each cell in the column
-                                    break;
-                                case 'F':
-                                    $sheet->setCellValue($cell, number_format((float) $averages[0]['combined_data'][$test]["loss_end"], 3, '.', '' )); // Set value for each cell in the column
-                                    break;
-                                case 'G':
-                                    $sheet->setCellValue($cell, $averages[0]['combined_data'][$test]["loss_end"] == 0 ? '-' : number_format((float) ($averages[0]['combined_data'][$test]["total_loss"] / $averages[0]['combined_data'][$test]["loss_end"]), 3, '.', '' )); // Set value for each cell in the column
-                                    break;
-                                default:
-                                        $current_row_fiber_id = $spreadsheet->getActiveSheet()->getCell('C'.$row)->getValue();
-                                        $index = findIndex($averages[$kun]['combined_data'], 'fiber_id',  preg_replace('/[^0-9]/', '', $current_row_fiber_id));
-                                        
-                                        if($index != ""){
-                                            $sheet->setCellValue($cell, $averages[$kun]['combined_data'][$index]['splice_loss']); // Set value for each cell in the column
-                                            
-                                        }
-                                    
+                for ($y = $awalColumn; $y != getNextColumn($awalColumn); $y++) {
+                    $test = 0;
+                    for ($row = 6; $row <= $jumlah_file + 5; $row++) {
+                        $cell = $y . $row; // Form the cell reference
+                        switch ($y) {
+                            case 'C':
+                                $sheet->setCellValue($cell, 'Core'.$averages[0]['combined_data'][$test]["fiber_id"]); // Set value for each cell in the column
                                 break;
-                            }
-                            $test++;
-                            
+                            case 'D':
+                                $sheet->setCellValue($cell, $averages[0]['combined_data'][$test]["wavelength"]); // Set value for each cell in the column
+                                break;
+                            case 'E':
+                                $sheet->setCellValue($cell, number_format((float) $averages[0]['combined_data'][$test]["total_loss"], 3, '.', '' )); // Set value for each cell in the column
+                                break;
+                            case 'F':
+                                $sheet->setCellValue($cell, number_format((float) $averages[0]['combined_data'][$test]["loss_end"], 3, '.', '' )); // Set value for each cell in the column
+                                break;
+                            case 'G':
+                                $sheet->setCellValue($cell, $averages[0]['combined_data'][$test]["loss_end"] == 0 ? '-' : number_format((float) ($averages[0]['combined_data'][$test]["total_loss"] / $averages[0]['combined_data'][$test]["loss_end"]), 3, '.', '' )); // Set value for each cell in the column
+                                break;
+                            default:
+                                    $current_row_fiber_id = $spreadsheet->getActiveSheet()->getCell('C'.$row)->getValue();
+                                    $index = findIndex($averages[$kun]['combined_data'], 'fiber_id',  preg_replace('/[^0-9]/', '', $current_row_fiber_id));
+                                    
+                                    if($index != ""){
+                                        $sheet->setCellValue($cell, $averages[$kun]['combined_data'][$index]['splice_loss']); // Set value for each cell in the column
+                                        
+                                    }
+                                
+                            break;
                         }
+                        $test++;
                         
                     }
-        
-                    $awalColumn = getNextColumn($sekarangColumn);
-                    $kun++;
+                    
                 }
-                
-                $writer = new Xlsx($spreadsheet); // Create a new Xlsx object
     
-                $writer->save($sub_section->sub_section_name.".xlsx");
-                header("Content-Type: application/vnd.ms-excel");
-                return redirect($sub_section->sub_section_name.".xlsx");
-            } else {
-                return redirect()->back()->with('error', 'No file sor is found !');
+                $awalColumn = getNextColumn($sekarangColumn);
+                $kun++;
             }
-            
 
+            $writer = new Xlsx($spreadsheet); // Create a new Xlsx object
+
+            $writer->save($section->section_name.".xlsx");
+            header("Content-Type: application/vnd.ms-excel");
+            return redirect($section->section_name.".xlsx");
+        } else {
+            return redirect()->back()->with('error', 'No file sor is found !');
         }
     }
 
@@ -909,7 +585,7 @@ class SorController extends Controller
 
     public function delete_request($request_id){
 
-        $deleted = DB::table('draf_sor')->where('request_id', $request_id)->delete();
+        $deleted = DB::table('sor_request')->where('request_id', $request_id)->delete();
 
 
         if ($deleted > 0) {
@@ -919,17 +595,21 @@ class SorController extends Controller
         }
     }
 
-    public function download_sor($type, $project_id, $segment_id, $section_id, $sub_section_id){
+    public function download_sor($project_id, $route_id, $segment_id, $section_id, $sub_section_id){
         
-        if($type == 'section'){
-            $zip_name = DB::table('section')->where('section_id', $section_id)->first()->section_name;
-            // Define the folder path
-            $folderPath = storage_path('app/public/' . $project_id . '/' . $segment_id . '/' . $section_id);
-        }else{
-            $zip_name = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->first()->sub_section_name;
-            // Define the folder path
-            $folderPath = storage_path('app/public/' . $project_id . '/' . $segment_id . '/' . $section_id . '/'. $sub_section_id);
-        }
+        // if($type == 'section'){
+        //     $zip_name = DB::table('section')->where('section_id', $section_id)->first()->section_name;
+        //     // Define the folder path
+        //     $folderPath = storage_path('app/public/' . $project_id . '/'. $route_id . '/' . $segment_id . '/' . $section_id);
+        // }else{
+        //     $zip_name = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->first()->sub_section_name;
+        //     // Define the folder path
+        //     $folderPath = storage_path('app/public/' . $project_id . '/'. $route_id . '/' . $segment_id . '/' . $section_id . '/'. $sub_section_id);
+        // }
+
+        $zip_name = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->first()->sub_section_name;
+        // Define the folder path
+        $folderPath = storage_path('app/public/' . $project_id . '/'. $route_id . '/' . $segment_id . '/' . $section_id . '/'. $sub_section_id);
 
         // Check if the folder exists
         if (!is_dir($folderPath)) {

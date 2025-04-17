@@ -26,28 +26,53 @@ class CoreController extends Controller
         $segment = DB::table('segment')->where('segment_id', $segment_id)->first();
         $section = DB::table('section')->where('project_id',$project_id)->where('route_id',$route_id)->where('segment_id', $segment_id)->where('section_id', $section_id)->first();
         $core = DB::table('core')->where('core', $core)->first();
-        
-        $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->first();
-        
-        if(file_exists(storage_path('app/public/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id.'/'.$sub_section_id.'/'.$core->core.'.sor.json'))){
-            $json = file_get_contents(storage_path('app/public/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id.'/'.$sub_section_id.'/'.$core->core.'.sor.json'));
-            $json_data = json_decode($json,true); 
 
-            $section = DB::table('section')->where('section_id', $section_id)->first();
+        if ($sub_section_id == '-') {
 
-            return view('core.show')
-            ->with('project',$project)
-            ->with('segment',$segment)
-            ->with('section',$section)
-            ->with('sub_section',$sub_section)
-            ->with('sub_section_id',$sub_section_id)
-            ->with('core',$core)
-            ->with('detail', $json_data);
+            if(file_exists(storage_path('app/public/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id.'/'.$core->core.'.sor.json'))){
+                $json = file_get_contents(storage_path('app/public/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id.'/'.$core->core.'.sor.json'));
+                $json_data = json_decode($json,true); 
+
+                $section = DB::table('section')->where('section_id', $section_id)->first();
+
+                return view('core.show')
+                ->with('project',$project)
+                ->with('segment',$segment)
+                ->with('section',$section)
+                ->with('sub_section_id',$sub_section_id)
+                ->with('core',$core)
+                ->with('detail', $json_data);
+
+            }else{
+                return redirect()->back()->with('error', 'Sor not found');
+            }   
 
         }else{
-            return redirect()->back()->with('error', 'Sor not found'.storage_path('app/public/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id.'/'.$core->core.'.sor.json'));
-        }   
+    
+            $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->first();
+
+            
+            if(file_exists(storage_path('app/public/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id.'/'.$core->core.'.sor.json'))){
+                $json = file_get_contents(storage_path('app/public/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id.'/'.$core->core.'.sor.json'));
+                $json_data = json_decode($json,true); 
+
+                $section = DB::table('section')->where('section_id', $section_id)->first();
+
+                return view('core.show')
+                ->with('project',$project)
+                ->with('segment',$segment)
+                ->with('section',$section)
+                ->with('sub_section_id',$sub_section_id)
+                ->with('core',$core)
+                ->with('detail', $json_data);
+
+            }else{
+                return redirect()->back()->with('error', 'Sor not found'.storage_path('app/public/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id.'/'.$core->core.'.sor.json'));
+            }   
+        }
         
+
+
     }
 
     public function create($project_id, $route_id, $segment_id, $section_id, $customer_id, $type_id, $sub_section_id, $input_type)
@@ -95,6 +120,7 @@ class CoreController extends Controller
 
         switch($input_type){
             case 'regular':
+                    return 'test'; 
                     // DB::table('core')->where('section_id', $request->section_id)->delete();
                 
                     // $cores =  $request->core_capacity;
@@ -131,14 +157,6 @@ class CoreController extends Controller
                     $from = (int) $request->from; // Convert to integer to ensure looping works correctly
                     $to = (int) $request->to; 
 
-                    $customer_name = DB::table('customer')->where('customer_id', $request->customer_id)->get()->first()->customer_name;
-                    
-                    if($request->customer_id == 000){
-                        $status = 'IDLE';
-                    }else{
-                        $status = 'BOOKED';
-                    }
-
                     for($i = $from; $i <= $to; $i++){
                         DB::table('core')->insert([
                             'project_id'=> $request->project_id,
@@ -149,13 +167,12 @@ class CoreController extends Controller
                             'type_id'=> $type_id,
                             'sub_section_id'=> $request->sub_section_id,
                             'core'=> str_pad($i, 3, '0', STR_PAD_LEFT),
-                            'initial_customers'=> $customer_name,
                             'initial_remarks' => 'NOT OK',
                             'actual_remarks' => 'NOT OK',
-                            'status' => $status
+                            'status' => 'IDLE'
                         ]);
                     }
-                    return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'customer_id' => $request->customer_id, 'type_id' => $request->type_id, 'sub_section_id' => $request->sub_section_id]));
+
                 break;
             case 'custom':
                     DB::table('core')
@@ -167,13 +184,6 @@ class CoreController extends Controller
                     ->delete();
                     
                     $loop = count($request->core);
-                    $customer_name = DB::table('customer')->where('customer_id', $request->customer_id)->get()->first()->customer_name;
-
-                    if($request->customer_id == 000){
-                        $status = 'IDLE';
-                    }else{
-                        $status = 'BOOKED';
-                    }
 
                     for($i = 0; $i < $loop; $i++){
                         DB::table('core')->insert([
@@ -185,95 +195,116 @@ class CoreController extends Controller
                             'type_id'=> $type_id,
                             'sub_section_id'=> $request->sub_section_id,
                             'core'=> $request->core[$i],
-                            'initial_customers'=> $customer_name,
                             'initial_remarks' => 'NOT OK',
                             'actual_remarks' => 'NOT OK',
-                            'status' => $status,
+                            'status' => 'IDLE',
                         ]);
                     }
-                    return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'customer_id' => $request->customer_id, 'type_id' => $request->type_id, 'sub_section_id' => $request->sub_section_id]));
-
                 break;
             case 'add':
-                    if (in_array(null, $request->core, true)) {
-                        return redirect()->back()->with('error', 'Core cannot be empty !');
-                    }
-                    
-                    if (count($request->core) !== count(array_unique($request->core))) {
-                        return redirect()->back()->with('error', 'Core values must be unique!');
-                    }
+                    return 'test2';
+                    // if (in_array(null, $request->core, true)) {
+                    //     return redirect()->back()->with('error', 'Core cannot be empty !');
+                    // }
 
-                    $sub_section = DB::table('sub_section')->where('sub_section_id', $request->sub_section_id)->first();
-                    $customer_name = DB::table('customer')->where('customer_id', $sub_section->customer_id)->get()->first()->customer_name;
-                    
-                    if($sub_section->customer_id === '000'){
-                        $status = 'IDLE';
-                    }else{
-                        $status = 'BOOKED';
-                    }
-                    
-                    $loop = count($request->core);
-                    for($i = 0; $i < $loop; $i++){
+                    // if(isset($request->sub_section_id)){
 
-                        $sub_initial_length = $sub_section->sub_initial_length;
-                        $sub_initial_max_total_loss = $sub_section->sub_initial_max_total_loss;
+                    //     $sub_section = DB::table('sub_section')->where('sub_section_id', $request->sub_section_id)->first();
                         
-                        if($sub_initial_length != null || $sub_initial_length != ''){
-                            if($request->length[$i] >= $sub_initial_length){
-                                if($request->total_loss_db[$i] <= $sub_initial_max_total_loss){
-                                    $initial_remarks = 'OK';
-                                }else{
-                                    $initial_remarks = 'NOT OK';
-                                }
-                            }else{
-                                $initial_remarks = 'NOT OK';
-                            }
-                        }else{
-                            $initial_remarks = 'NOT OK';
-                        }
+                    //     $loop = count($request->core);
+                    //     for($i = 0; $i < $loop; $i++){
+                            
+                    //         if($request->customer[$i] == null || $request->customer[$i] == ''){
+                    //             if($request->length[$i] >= $sub_section->sub_initial_length ){
+                    //                 if($request->total_loss_db[$i] <= $sub_section->sub_initial_max_total_loss){
+                    //                     $initial_remarks = 'OK';
+                    //                 }else{
+                    //                     $initial_remarks = 'NOT OK';
+                    //                 }
+                    //             }else{
+                    //                 $initial_remarks = 'NOT OK';
+                    //             }
+                    //         }else{
+                    //             $initial_remarks = 'AKTIF';
+                    //         }
 
+                    //         DB::table('core')->insert([
+                    //             'project_id'=> $request->project_id,
+                    //             'segment_id'=> $request->segment_id,
+                    //             'section_id'=> $request->section_id,
+                    //             'sub_section_id'=> $request->sub_section_id,
+                    //             'core'=> $request->core[$i],
+                    //             'initial_customers'=> $request->customer[$i],
+                    //             'initial_end_cable'=> $request->length[$i],
+                    //             'initial_total_loss_db'=> $request->total_loss_db[$i],
+                    //             'initial_loss_db_km'=> $request->loss_db_km[$i],
+                    //             'initial_remarks' => $initial_remarks ,
+                    //             'actual_remarks' => 'NOT OK'
+                    //         ]);
+                            
+                    //     }
                         
+                    //     return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'sub_section_id' => $request->sub_section_id]));
+                    // }else{
 
-                        DB::table('core')->insert([
-                            'project_id'=> $request->project_id,
-                            'route_id'=> $request->route_id,
-                            'segment_id'=> $request->segment_id,
-                            'section_id'=> $request->section_id,
-                            'customer_id'=> $sub_section->customer_id,
-                            'type_id'=> $sub_section->type_id,
-                            'sub_section_id'=> $request->sub_section_id,
-                            'core'=> $request->core[$i],
-                            'initial_customers'=> $customer_name,
-                            'initial_end_cable'=> $request->length[$i],
-                            'initial_total_loss_db'=> $request->total_loss_db[$i],
-                            'initial_loss_db_km'=> $request->loss_db_km[$i],
-                            'initial_remarks' => $initial_remarks,
-                            'actual_remarks' => 'NOT OK',
-                            'status' => $status,
-                        ]);
+                    //     $section = DB::table('section')->where('section_id', $request->section_id)->first();
                         
-                    }
-                    
-                    return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'customer_id' => $request->customer_id, 'type_id' => $request->type_id, 'sub_section_id' => $request->sub_section_id]));
-                    
+                    //     $loop = count($request->core);
+    
+                    //     for($i = 0; $i < $loop; $i++){
+
+                    //         if($request->customer[$i] == null || $request->customer[$i] == ''){
+                    //             if($request->length[$i] != null || $request->length[$i] != ''){
+                    //                 if($request->length[$i] >= $section->initial_length ){
+                    //                     if($request->total_loss_db[$i] <= $section->initial_max_total_loss){
+                    //                         $initial_remarks = 'OK';
+                    //                     }else{
+                    //                         $initial_remarks = 'NOT OK';
+                    //                     }
+                    //                 }else{
+                    //                     $initial_remarks = 'NOT OK';
+                    //                 }
+                    //             }else{
+                    //                 $initial_remarks = 'NOT OK';
+                    //             }
+                    //         }else{
+                    //             $initial_remarks = 'AKTIF';
+                    //         }
+
+                            
+                    //         DB::table('core')->insert([
+                    //             'project_id'=> $request->project_id,
+                    //             'segment_id'=> $request->segment_id,
+                    //             'section_id'=> $request->section_id,
+                    //             'core'=> $request->core[$i],
+                    //             'initial_customers'=> $request->customer[$i],
+                    //             'initial_end_cable'=> $request->length[$i],
+                    //             'initial_total_loss_db'=> $request->total_loss_db[$i],
+                    //             'initial_loss_db_km'=> $request->loss_db_km[$i],
+                    //             'initial_remarks' => $initial_remarks ,
+                    //             'actual_remarks' => 'NOT OK'
+                    //         ]);
+                    //     }
+                        
+                    //     return redirect(route('section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'sub_section_id' => '-']));
+                        
+                    // }
                 break;
             default:
                 return redirect()->back()->with('error', 'cannot find input type');
         }
 
-        // return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'customer_id' => $request->customer_id, 'type_id' => '-', 'sub_section_id' => $request->sub_section_id]));
+        return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'customer_id' => $request->customer_id, 'type_id' => '-', 'sub_section_id' => $request->sub_section_id]));
         
     }
 
-    public function edit($project_id, $route_id, $segment_id, $section_id, $customer_id, $type_id, $sub_section_id)
+    public function edit($project_id, $route_id, $segment_id, $section_id, $sub_section_id)
     {
         return view('core.edit')
         ->with('project_id',$project_id)
         ->with('route_id',$route_id)
         ->with('segment_id', $segment_id)
         ->with('section_id', $section_id)
-        ->with('customer_id', $customer_id)
-        ->with('type_id', $type_id)
         ->with('sub_section_id', $sub_section_id);
     
     }
@@ -308,19 +339,13 @@ class CoreController extends Controller
                     $actual_customers = DB::table('core')->where('sub_section_id', $request->sub_section_id)->where('core', $request->core[$i])->get()->first()->actual_customers;
                     
                     if($actual_customers == '' || $actual_customers == null){
-                        // ACTUAL NULL
+                        // ACTUAL IDLE
                         if($request->initial_customers[$i] == '' || $request->initial_customers[$i] == null){
-                            // ACTUAL & INITIAL NULL
+                            // ACTUAL & INITIAL IDLE
                             $status = 'IDLE';
                         }else{
-                            // ACTUAL NULL & INITIAL ADA
-                            if($sub_section->customer_id === '000'){
-                                // ACTUAL NULL & INITIAL TRIASMITRA
-                                $status = 'IDLE';
-                            }else{
-                                // ACTUAL NULL & INITIAL BUKAN TRIASMITRA
-                                $status = 'BOOKED';
-                            }
+                            // ACTUAL IDLE DAN INITIAL ADA 
+                            $status = 'BOOKED';
                         }
                     }else{
                         // ACTUAL ADA
@@ -328,23 +353,19 @@ class CoreController extends Controller
                             // ACTUAL & INITIAL SAMA
                             $status = 'ACTIVE';
                         }else{
-                            // ACTUAL & INITIAL TIDAK SAMA
+                            // INTIAL & ACTUAL TIDAK SAMA 
                             if($request->initial_customers[$i] == '' || $request->initial_customers[$i] == null){
-                                // ACTUAL ADA & INITIAL TIDAK ADA
+                                // ACTUAL ADA & INITIAL IDLE
                                 $status = 'USED';
+                                
                             }else{
-                                 // ACTUAL ADA & INITIAL ADA
-                                if($sub_section->customer_id === '000'){
-                                    // ACTUAL ADA & INITIAL TRIASMITRA
-                                    $status = 'USED';
-                                }else{
-                                    // ACTUAL ADA & INITIAL BUKAN TRIASMITRA
-                                    $status = 'MISMATCH';
-                                }
+                                // INITIAL ADA & ACTUAL ADA
+                                $status = 'USED';
                             }
                         }
                     }
                         
+                    
                     DB::table('core')->where('sub_section_id', $request->sub_section_id)->where('core', $request->core[$i])->update([
                         'initial_customers' => $request->initial_customers[$i],
                         'initial_end_cable' => $request->initial_end_cable[$i],
@@ -353,18 +374,9 @@ class CoreController extends Controller
                         'initial_remarks' => $initial_remarks,
                         'status' => $status
                     ]);
-
-                    if($request->type_id != '-' || $request->type_id != null){
-
-                        DB::table('core')->where('sub_section_id', $request->sub_section_id)->where('customer_id', $request->customer_id)->where('core', $request->core[$i])->update([
-                            'initial_customers' => $request->initial_customers[$i],
-                            'status' => $status
-                        ]);
-                    }
-
                 };
 
-                return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'customer_id'=> $request->customer_id, 'type_id'=> $request->type_id, 'sub_section_id'=> $request->sub_section_id]));
+                return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'sub_section_id'=> $request->sub_section_id]));
             break;
             case 'ms':
                 $loop = count($request->core);
@@ -392,13 +404,13 @@ class CoreController extends Controller
                     $initial_customer = DB::table('core')->where('sub_section_id', $request->sub_section_id)->where('core', $request->core[$i])->get()->first()->initial_customers;
                     
                     if($initial_customer == '' || $initial_customer == null){
-                        // INITIAL NULL
+                        // INITIAL IDLE
                         if($request->actual_customers[$i] == '' || $request->actual_customers[$i] == null){
-                            // INITIAL NULL & ACTUAL NULL
+                            // INITIAL & ACTUAL IDLE
                             $status = 'IDLE';
                         }else{
-                            // INTIAL NULL DAN ACTUAL ADA 
                             $status = 'USED';
+                            // INTIAL IDLE DAN ACTUAL ADA 
                         }
                     }else{
                         // INITIAL ADA
@@ -408,17 +420,13 @@ class CoreController extends Controller
                         }else{
                             // INTIAL & ACTUAL TIDAK SAMA 
                             if($request->actual_customers[$i] == '' || $request->actual_customers[$i] == null){
-                                // INITIAL ADA & ACTUAL NULL
-                                if($sub_section->customer_id === '000'){
-                                    // INITIAL TRIASMITRA & ACTUAL NULL
-                                    $status = 'IDLE';
-                                }else{
-                                    // INITIAL BUKAN TRIASMITRA & ACTUAL NULL
-                                    $status = 'BOOKED';
-                                }
+                                // INITIAL ADA & ACTUAL IDLE
+                                $status = 'BOOKED';
+                                
                             }else{
                                 // INITIAL ADA & ACTUAL ADA
-                                $status = 'MISMATCH';
+                                $status = 'USED';
+
                             }
                         }
                     }
@@ -431,21 +439,11 @@ class CoreController extends Controller
                         'actual_remarks' => $actual_remarks,
                         'status' => $status,
                     ]);
-
-                    if($request->type_id != '-' || $request->type_id != null){
-
-                        DB::table('core')->where('sub_section_id', $request->sub_section_id)->where('customer_id', $request->customer_id)->where('core', $request->core[$i])->update([
-                            'actual_customers' => $request->actual_customers[$i],
-                            'status' => $status
-                        ]);
-                    }
                 };
 
-                return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'customer_id'=> $request->customer_id, 'type_id'=> $request->type_id, 'sub_section_id'=> $request->sub_section_id]));
+                return redirect(route('sub_section.show', ['project_id'=>$request->project_id,'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'sub_section_id'=> $request->sub_section_id]));
             
             break;
-            default :
-                return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'customer_id'=> $request->customer_id, 'type_id'=> $request->type_id, 'sub_section_id'=> $request->sub_section_id]))->with('error', 'Cannot find user role !');
         }
 
     }
@@ -473,6 +471,15 @@ class CoreController extends Controller
         $segment_id = $request->segment_id;
         $section_id = $request->section_id;
 
+        $section = DB::table('section')->where('section_id', $request->section_id)->first();
+
+        $sub_sections = DB::table('sub_section')
+        ->where('project_id', $project_id)
+        ->where('route_id', $route_id)
+        ->where('segment_id', $segment_id)
+        ->where('section_id', $section_id)
+        ->get();
+
         if($file = $request->file('file')) {
             
             $app_path = storage_path('app/public/excel/'.$project_id.'/'.$route_id.'/'.$segment_id.'/'.$section_id);
@@ -497,27 +504,21 @@ class CoreController extends Controller
 
             foreach ( $row_range as $row ) { 
 
-                $core = str_pad(trim($sheet->getCell('A' . $row)->getValue()), 3, '0', STR_PAD_LEFT);
-                $customers = trim($sheet->getCell('B' . $row)->getValue());
-                $type_id = trim($sheet->getCell('C' . $row)->getValue() ?? '');
-                $end_cable = trim($sheet->getCell('D' . $row)->getValue());
-                $total_loss_db = trim($sheet->getCell('E' . $row)->getValue());
-                $loss_db_km = trim($sheet->getCell('F' . $row)->getValue());
+                $core = $sheet->getCell( 'A' . $row )->getValue();
+                $customers = $sheet->getCell( 'B' . $row )->getValue();
+                $type_id = $sheet->getCell( 'C' . $row )->getValue();
+                $end_cable = $sheet->getCell( 'D' . $row )->getValue();
+                $total_loss_db = $sheet->getCell( 'E' . $row )->getValue();
+                $loss_db_km = $sheet->getCell( 'F' . $row )->getValue();
 
-                $customer = DB::table('customer')->where('customer_name', $customers)->first();
-
-                if (!$customer) {
-                    return redirect()->back()->with('error', 'Core '.$core.' Customer '.$sheet->getCell('B' . $row)->getValue().' not found.');
-                }
-
-                $customer_id = $customer->customer_id;
+                $customer_id = DB::table('customer')->where('customer_name', $customers)->get()->first()->customer_id;
 
                 $record = DB::table('core')
                 ->where('project_id', $project_id)
                 ->where('route_id', $route_id)
                 ->where('segment_id', $segment_id)
                 ->where('section_id', $section_id)
-                ->where('customer_id', $customer_id)
+                ->where('customers', $customers)
                 ->where('type_id', $type_id)
                 ->where('core', $core)
                 ->get()
@@ -527,45 +528,12 @@ class CoreController extends Controller
                     return redirect()->back()->with('error', 'Core '.$core.' is not matching !!');
                 }
 
-                echo $project_id.'__'.$route_id.'__'.$segment_id.'__'.$section_id.'__'.$customer_id.'__'.$type_id.'__'.$core;
-                echo '</br>';
-                
-                $startcount++;
-            }
-
-            foreach ( $row_range as $row ) { 
-
-                $core = str_pad(trim($sheet->getCell('A' . $row)->getValue()), 3, '0', STR_PAD_LEFT);
-                $customers = trim($sheet->getCell('B' . $row)->getValue());
-                $type_id = trim($sheet->getCell('C' . $row)->getValue() ?? '');
-                $end_cable = trim($sheet->getCell('D' . $row)->getValue());
-                $total_loss_db = trim($sheet->getCell('E' . $row)->getValue());
-                $loss_db_km = trim($sheet->getCell('F' . $row)->getValue());
-
-                $customer = DB::table('customer')->where('customer_name', $customers)->first();
-
-                if (!$customer) {
-                    return redirect()->back()->with('error', 'Core '.$core.' Customer '.$customers.' not found.');
-                }
-
-                $customer_id = $customer->customer_id;
-
-                $record = DB::table('core')
-                ->where('project_id', $project_id)
-                ->where('route_id', $route_id)
-                ->where('segment_id', $segment_id)
-                ->where('section_id', $section_id)
-                ->where('customer_id', $customer_id)
-                ->where('type_id', $type_id)
-                ->where('core', $core)
-                ->get()
-                ->first();
-
                 $sub_section_id = $record->sub_section_id;
 
                 $length = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first()->sub_initial_length;
                 $min_total_loss = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first()->sub_initial_min_total_loss;
                 $max_total_loss = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first()->sub_initial_max_total_loss;
+                
                 
                 if($end_cable >= $length ){
                     if( $total_loss_db <= $max_total_loss ){
@@ -577,18 +545,19 @@ class CoreController extends Controller
                     $remarks = 'NOT OK';
                 }
 
-                if ($customers == 'TRIASMITRA') {
+                if ($customers == '') {
                     $status = 'IDLE';
                 } else {
                     $status = 'BOOKED';
                 }
+                
 
                 DB::table('core')
                 ->where('project_id', $project_id)
                 ->where('route_id', $route_id)
                 ->where('segment_id', $segment_id)
                 ->where('section_id', $section_id)
-                ->where('customer_id', $customer_id)
+                ->where('customers', $customers)
                 ->where('type_id', $type_id)
                 ->where('sub_section_id', $sub_section_id)
                 ->where('core', $core)
@@ -604,13 +573,14 @@ class CoreController extends Controller
                 $startcount++;
             }
 
+            // return redirect()->back()->with('success', 'Great! Data has been successfully uploaded.');
             return redirect(route('section.show', ['project_id' => $project_id,'route_id' => $route_id, 'segment_id' => $segment_id, 'section_id' => $section_id ]))->with('success', 'Great! Data has been successfully uploaded.');
     
 
         }else{
             return redirect()->back()->with('error', 'File is not found !!.');
         }
-        
+
     }
 
     

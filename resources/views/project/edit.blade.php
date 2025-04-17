@@ -76,19 +76,19 @@
 
 
 @section('breadcrumb')
-    <div class="card bg-light-info shadow-none position-relative overflow-hidden">
-        <div class="card-body px-4 py-5">
+    <div class="card bg-dark text-white shadow-lg position-relative overflow-hidden">
+        <div class="card-body px-5 py-5">
             <div class="row align-items-center">
                 <div class="col-9">
-                    <h3 class="fw-semibold" style="font-size: 2rem;">Edit Project</h3>
-                    <hr>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
+                    <h3 class="fw-semibold text-white" style="font-size: 1.5rem;"> EDIT PROJECT </h3>
+                    <h3 class="fw-semibold text-white" style="font-size: 1.8rem;"> #{{$project->project_id}} {{$project->project_name}} ( {{$project->project_description}} )</h3>
+                    <nav aria-label="breadcrumb" class="mt-3">
+                        <ol class="breadcrumb" style="font-size: 1rem;">
                             <li class="breadcrumb-item">
                                 <a class="text-decoration-none" href="/">Dashboard</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=>$project->project_id])}}">{{$project->project_name}}</a>
+                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=>$project->project_id, 'route_id'=>'-'])}}">{{$project->project_name}}</a>
                             </li>
                             <li class="breadcrumb-item" aria-current="page">
                                 Edit Project
@@ -101,25 +101,53 @@
     </div>
 @endsection
 
-
 @section('content')
-    <div class="row">
-        <div class="col-lg-12 align-items-stretch">
-            <div class="card w-100" style="padding:2rem;">
-                <form action="{{route('project.update')}}" method="POST">
-                    {{ csrf_field() }}
-                    <input type="hidden" readonly name="project_id" type="text" value="{{$project->project_id}}">
-                    <label>Project Name</label>
-                    <input type="text" class="form-control mb-2" name="project_name" value="{{$project->project_name}}">
-                    <label>Project Description</label>
-                    <input type="text" class="form-control mb-2" name="project_description" value="{{$project->project_description}}">
-                    <hr>
-                    <div style="min-height: 3rem;"></div>
-                    <div class="text-center">
-                        <button type="submit"  style="padding:.5rem 3rem;" class="btn btn-primary" >Submit</button>
-                        <a href="{{ URL::previous() }}" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
+    <div class="card">
+        <div class="card-body">
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ route('project.update') }}" method="POST" enctype=multipart/form-data>
+                        {{ csrf_field() }}
+                        <div class="table-responsive">
+                            <table class="table table-stripped text-nowrap mb-0 align-middle" style="margin-top:1rem;">
+                                <thead class="text-dark fs-4">
+                                    <tr>
+                                        <th>
+                                            <h6 style="display:inline-block; margin-right:.5rem;" class="fw-semibold mb-0">
+                                                Project ID</h6>
+                                        <th>
+                                            <h6 style="display:inline-block; margin-right:.5rem;" class="fw-semibold mb-0">
+                                                Project Name</h6>
+                                        </th>
+                                        <th>
+                                            <h6 style="display:inline-block; margin-right:.5rem;" class="fw-semibold mb-0">
+                                                Project Description</h6>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableToModify">
+                                    <tr id="rowToClone">
+                                        <input name="project_id" value="{{$project->project_id}}" type="hidden">
+                                        <td style="width:10%;">
+                                            <input disabled class="form-control" type="text" value="{{$project->project_id}}">
+                                        </td>
+                                        <td style="width:50%;">
+                                            <input class="form-control" value="{{$project->project_name}}" name="project_name" type="text">
+                                        </td>
+                                        <td style="width:40%;">
+                                            <input class="form-control" value="{{$project->project_description}}" name="project_description" type="text">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="min-height: 3rem;"></div>
+                        <div class="text-center">
+                            <button type="submit" style="padding:.5rem 3rem;" class="btn btn-primary">Submit</button>
+                            <a href="{{ URL::previous() }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

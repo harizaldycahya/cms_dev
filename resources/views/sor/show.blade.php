@@ -3,14 +3,15 @@
 
 @php
     $project = DB::table('project')->where('project_id', $request->project_id)->get()->first();
-    $segment = DB::table('segment')->where('segment_id', $request->segment_id)->get()->first();
-    $section = DB::table('section')->where('section_id', $request->section_id)->get()->first();
-    if(isset($sub_section)){
-        $sub_section = DB::table('sub_section')->where('sub_section_id', $request->sub_section_id)->get()->first();
-        $request_sor = DB::table('draf_sor')->where('request_id', $request->request_id)->where('sub_section_id', $request->sub_section_id)->get()->first();
-    }else{
-        $request_sor = DB::table('draf_sor')->where('request_id', $request->request_id)->where('section_id', $request->section_id)->get()->first();
-    }
+    $segment = DB::table('segment')->where('project_id', $request->project_id)->where('route_id', $request->route_id)->where('segment_id', $request->segment_id)->get()->first();
+    $route_id = $segment->route_id;
+    $section = DB::table('section')->where('project_id', $request->project_id)->where('route_id', $request->route_id)->where('segment_id', $request->segment_id)->where('section_id', $request->section_id)->get()->first();
+    // $request_sor = DB::table('sor_request')->where('request_id', $request->request_id)->where('section_id', $request->section_id)->get()->first();
+    $request_sor = DB::table('sor_request')->where('request_id', $request->request_id)->where('sub_section_id', $request->sub_section_id)->get()->first();
+    $sub_section = DB::table('sub_section')->where('sub_section_id', $request->sub_section_id)->get()->first();
+    // if(isset($sub_section)){
+    // }else{
+    // }
     
 @endphp
 
@@ -87,43 +88,29 @@
 @endsection
 
 @section('breadcrumb')
-    <div class="card bg-light-info shadow-none position-relative overflow-hidden">
+    <div class="card bg-dark text-white shadow-lg position-relative overflow-hidden">
         <div class="card-body px-4 py-5">
             <div class="row align-items-center">
                 <div class="col-9">
-                    @if (isset($sub_section_id))
-                        @php
-                            $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-                        @endphp
-                        <h3 class="fw-semibold" style="font-size: 2rem;"> Request SOR Detail : {{$sub_section->sub_section_name}}</h3>
-                    @else
-                        <h3 class="fw-semibold" style="font-size: 2rem;"> Request SOR Detail : {{$section->section_name}}</h3>
-                    @endif
+                    <h3 class="fw-semibold text-white" style="font-size: 2rem;">Sub Section : {{$sub_section->sub_section_name}} <span style="text-transform: uppercase;">({{DB::table('customer')->where('customer_id', $sub_section->customer_id)->get()->first()->customer_name}} {{$sub_section->type_id}})</span> </h3>
                     <hr>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
+                    <nav aria-label="breadcrumb" class="mt-3">
+                        <ol class="breadcrumb" style="font-size: 1rem;">
                             <li class="breadcrumb-item">
                                 <a class="text-decoration-none" href="/">Dashboard</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project->project_id])}}">{{$project->project_name}}</a>
+                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project->project_id, 'route_id'=> '-' ])}}">{{$project->project_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('segment.show', ['project_id'=> $project->project_id, 'segment_id'=>$segment->segment_id])}}">{{$segment->segment_name}}</a>
+                                <a class="text-decoration-none" href="{{route('segment.show', ['project_id'=> $project->project_id, 'route_id'=> $route_id , 'segment_id'=>$segment->segment_id])}}">{{$segment->segment_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('section.show', ['project_id'=> $project->project_id, 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id])}}">{{$section->section_name}}</a>
+                                <a class="text-decoration-none" href="{{route('section.show', ['project_id'=> $project->project_id, 'route_id'=> $route_id , 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id])}}">{{$section->section_name}}</a>
                             </li>
-                            @if (isset($sub_section_id))
-                                @php
-                                    $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-                                @endphp
-                                <li class="breadcrumb-item" aria-current="page">
-                                    <a class="text-decoration-none" href="{{route('sub_section.show', ['project_id'=> $project->project_id, 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id, 'sub_section_id'=>$sub_section->sub_section_id])}}">
-                                        {{ $sub_section->sub_section_name}}
-                                    </a>
-                                </li>
-                            @endif
+                            <li class="breadcrumb-item" aria-current="page">
+                                    {{$sub_section->sub_section_name}}
+                            </li>
                             <li class="breadcrumb-item">
                                 Request SOR Detail
                             </li>
@@ -184,7 +171,9 @@
                     <th colspan="3" class="">
                         @switch($request_sor->status)
                             @case('PROCESS')
-                                    <h6 style="display:inline-block;" class=" text-right fw-semibold mb-0">STATUS : <span class="text-primary">{{$request_sor->status}}</span> </h6>
+                                    <h6 style="display:inline-block;" class=" text-right fw-semibold mb-0">STATUS :
+                                        <span class="text-primary"> {{auth()->user()->role == 'lapangan' ? 'WAITING FOR APPROVAL' : 'PROCESS'}}</span> 
+                                    </h6>
                                 @break
                             @case('APPROVE')
                                     <h6 style="display:inline-block;" class=" text-right fw-semibold mb-0">STATUS : <span class="text-success">{{$request_sor->status}}</span> </h6>

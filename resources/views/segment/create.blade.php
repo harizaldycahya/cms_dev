@@ -1,5 +1,23 @@
 @extends('layouts.app')
 
+@php
+    switch ($route_id) {
+        case 1:
+            $route_name = 'SUBMARINE';
+            break;
+        case 2:
+            $route_name = 'INLAND';
+            break;
+        case 3:
+            $route_name = 'LASTMILE';
+            break;
+        
+        default:
+            $route_name = 'UNDEFINED';
+            break;
+    }
+@endphp
+
 @section('head_script')
     <style>
         html,
@@ -77,21 +95,20 @@
     <!--  Header End -->
 @endsection
 
-
 @section('breadcrumb')
-    <div class="card bg-light-info shadow-none position-relative overflow-hidden">
-        <div class="card-body px-4 py-5">
+    <div class="card bg-dark text-white shadow-lg position-relative overflow-hidden">
+        <div class="card-body px-5 py-5">
             <div class="row align-items-center">
                 <div class="col-9">
-                    <h3 class="fw-semibold" style="font-size: 2rem;">Create Segment</h3>
-                    <hr>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
+                    <h3 class="fw-semibold text-white" style="font-size: 1.5rem; text-transform: uppercase;"> #{{$project->project_id}} PROJECT {{ ucwords(strtolower($project->project_name)) }} ({{$route_name}})</h3>
+                    <h3 class="fw-semibold text-white" style="font-size: 1.5rem;">  CREATE SEGMENT</h3>
+                    <nav aria-label="breadcrumb" class="mt-3">
+                        <ol class="breadcrumb" style="font-size: 1rem;">
                             <li class="breadcrumb-item">
                                 <a class="text-decoration-none" href="/">Dashboard</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project_id])}}">{{$project->project_name}}</a>
+                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project_id, 'route_id'=> $route_id])}}">{{$project->project_name}}</a>
                             </li>
                             <li class="breadcrumb-item" aria-current="page">
                                 Create Segment
@@ -112,6 +129,7 @@
                 <div class="card-body">
                     <form action="{{ route('segment.store') }}" method="POST" enctype=multipart/form-data>
                         {{ csrf_field() }}
+                        <input type="hidden" name="route_id" value="{{$route_id}}">
                         <div class="table-responsive">
                             <table class="table table-bordered text-nowrap mb-0 align-middle" style="margin-top:1rem;">
                                 <thead class="text-dark fs-4">
@@ -124,6 +142,10 @@
                                         </th>
                                         <th class="">
                                             <h6 style="display:inline-block; margin-right:.5rem;" class="fw-semibold mb-0">
+                                                Segment ID</h6>
+                                        </th>
+                                        <th class="">
+                                            <h6 style="display:inline-block; margin-right:.5rem;" class="fw-semibold mb-0">
                                                 Segment Name</h6>
                                         </th>
                                     </tr>
@@ -131,13 +153,25 @@
                                 <tbody id="tableToModify">
                                     <tr id="rowToClone" class="testing2">
                                         <input hidden value="{{ $project_id }}" name="project_id">
+                                        <input hidden value="{{ $route_id }}" name="route_id">
                                         <td class="grid justify-center text-center py-4">
                                             <div style="cursor:pointer;" onclick="hapus(this)"
                                                 class="delete_button inline-block text-danger">
                                                 <i style="font-size:1.5rem;" class="ti ti-square-x"></i>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td style="width:10%;">
+                                            <input 
+                                                class="form-control" 
+                                                name="segment_id[]" 
+                                                type="number" 
+                                                maxlength="2" 
+                                                pattern="\d{2}" 
+                                                title="Please enter exactly 2 digits." 
+                                                required
+                                            >
+                                        </td>
+                                        <td style="width:80%;">
                                             <input class="form-control" class="outline outline-2" name="segment_name[]"
                                                 type="text">
                                         </td>

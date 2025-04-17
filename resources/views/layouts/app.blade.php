@@ -12,10 +12,13 @@
   <link rel="shortcut icon" type="image/png" href="{{ asset('layout/images/logos/favicon.png') }}" />
   <link rel="stylesheet" href="{{ asset('layout/css/styles.min.css') }}" />
 
+
   <!-- Datatables -->
   <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
   <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <!-- Datatables -->
 
   @yield('head_script')
@@ -99,7 +102,7 @@
       margin: .5rem .5rem !important;
     }
 
-    .border-with-dot {
+    .border-with-dot{
         position: relative;
         padding-left: 2px; /* Adjust padding to create space for the dot */
         border-left: 1.5px solid #4C6EF5; /* Regular left border */
@@ -152,10 +155,34 @@
       border-radius: 50%;
       border: 2px solid #e8571e;
     }
-
+    
     .link-custom:hover{
       background-color: #EDF2FF;
-      color: #4C6EF5 !important;
+      color: #4DA3FF !important;
+    }
+
+    .select2-container {
+      width: 100% !important;
+    }
+
+    .select2-selection--single {
+      width: 100% !important;
+    }
+    .select2-container--default .select2-selection--single {
+      height: 38px; /* Match Bootstrap .form-select height */
+      padding: 0.375rem 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+      line-height: 2.1;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+      height: 38px;
+      right: 10px;
     }
 
     
@@ -166,6 +193,10 @@
 <body>
     @yield('outside_content')
     
+    @php
+      $projects = DB::table('project')->get();
+    @endphp
+
     <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
       data-sidebar-position="fixed" data-header-position="fixed">
 
@@ -183,421 +214,234 @@
           </div>
           <div style="min-height: 4rem;"></div>
 
-          @if(auth()->user()->role == 'hashmicro')
-              <!-- Sidebar navigation-->
-              <nav class="sidebar-nav scroll-sidebar " style="border-radius: 0;" data-simplebar="">
-                <ul id="sidebarnav">
-                  <li class="nav-small-cap" >
-                    <i class="ti ti-dots nav-small-cap-icon fs-4" ></i>
-                    <span class="hide-menu">Home</span>
-                  </li> 
-                  <li class="sidebar-item">
-                    <a class="sidebar-link" href="{{route('hashmicro.index')}}" aria-expanded="false">
-                      <span>
-                        <i class="ti ti-layout-dashboard"></i>
-                      </span>
-                      <span class="hide-menu">List Of Inputs</span>
-                    </a>
-                  </li>
-                </ul>
-                <div style="height: 3rem;"></div>
-              </nav>
-              <!-- End Sidebar navigation -->
-
-          @else
-              <!-- Sidebar navigation-->
-              <nav class="sidebar-nav scroll-sidebar " style="border-radius: 0;" data-simplebar="">
-                <ul id="sidebarnav">
-                  <li class="nav-small-cap" >
-                    <i class="ti ti-dots nav-small-cap-icon fs-4" ></i>
-                    <span class="hide-menu">Home</span>
-                  </li> 
-                  <li class="sidebar-item">
-                    <a class="sidebar-link" href="{{route('dashboard')}}" aria-expanded="false">
-                      <span>
-                        <i class="ti ti-layout-dashboard"></i>
-                      </span>
-                      <span class="hide-menu">Dashboard</span>
-                    </a>
-                  </li>
-                  
-                  @if(auth()->user()->role == 'ms' || auth()->user()->role == 'lapangan')
-                    <li class="nav-small-cap">
-                      <i class="ti ti-dots nav-small-cap-icon"></i>
-                      <span class="hide-menu">Management</span>
-                    </li>
-                    <li class="sidebar-item">
-                      @php
-                          $number_of_requests_project = count(DB::table('sor_request')->where('status', 'PROCESS')->get());   
-                      @endphp
-                      <a style="padding:.6rem 3rem .6rem .6rem;" class="sidebar-link" href="{{route('sor.sor_request')}}" aria-expanded="false">
-                        <span class="col-2">
-                          <i class="ti ti-layout-dashboard" style="font-size:1.2rem;"></i>
-                        </span>
-                        <span class="hide-menu col-8" style=" font-size:.8rem;">SOR Request</span>
-                        @if($number_of_requests_project > 0 && auth()->user()->role == 'ms')
-                          <div class="col-2 bg-danger text-white text-center" style="font-size:.8rem; border-radius: 9999rem;">{{$number_of_requests_project}}</div>
-                        @endif
-                      </a>
-                    </li>
-                  @endif
-                  
-                  
-                  @if(auth()->user()->role == 'engineering')
-                    <li class="nav-small-cap">
-                      <i class="ti ti-dots nav-small-cap-icon"></i>
-                      <span class="hide-menu">Management</span>
-                    </li>
-                    <li class="sidebar-item">
-                      <a class="sidebar-link" href="{{route('project.create')}}" aria-expanded="false">
-                        <span>
-                          <i class="ti ti-file-plus"></i>
-                        </span>
-                        <span class="hide-menu">Create Project</span>
-                      </a>
-                    </li>
-                  @endif
-                  <li class="nav-small-cap">
-                    <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-                    <span class="hide-menu">Information</span>
-                  </li>
-
+          <!-- Sidebar navigation-->
+          <nav class="sidebar-nav scroll-sidebar " style="border-radius: 0;" data-simplebar="">
+            <ul id="sidebarnav">
+              <!-- Button trigger modal -->
+            {{-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#searchModal">
+              SEARCH 
+            </button> --}}
+            <li class="sidebar-item ">
+              <a style="cursor: pointer; color:white;" class="sidebar-link bg-info" data-bs-toggle="modal" data-bs-target="#searchModal" aria-expanded="false">
+                <span>
+                  <i class="ti ti-search"></i>
+                </span>
+                <span class="hide-menu">SEARCH</span>
+              </a>
+            </li>
+              <li class="nav-small-cap" >
+                <i class="ti ti-dots nav-small-cap-icon fs-4" ></i>
+                <span class="hide-menu">Home</span>
+              </li> 
+              <li class="sidebar-item">
+                <a class="sidebar-link" href="{{route('dashboard')}}" aria-expanded="false">
+                  <span>
+                    <i class="ti ti-layout-dashboard"></i>
+                  </span>
+                  <span class="hide-menu">Dashboard</span>
+                </a>
+              </li>
+              
+              @if(auth()->user()->role == 'ms' || auth()->user()->role == 'lapangan')
+                <li class="nav-small-cap">
+                  <i class="ti ti-dots nav-small-cap-icon"></i>
+                  <span class="hide-menu">Information</span>
+                </li>
+                <li class="sidebar-item">
                   @php
-                    $projects = DB::table('project')->get();
+                      $number_of_requests_project = count(DB::table('sor_request')->where('status', 'PROCESS')->get());   
                   @endphp
+                  <a style="padding:.6rem 3rem .6rem .6rem;" class="sidebar-link" href="{{route('sor.sor_request')}}" aria-expanded="false">
+                    <span class="col-2">
+                      <i class="ti ti-layout-dashboard" style="font-size:1.2rem;"></i>
+                    </span>
+                    <span class="hide-menu col-8" style=" font-size:.8rem;">SOR Request</span>
+                    @if($number_of_requests_project > 0 && auth()->user()->role == 'ms')
+                      <div class="col-2 bg-danger text-white text-center" style="font-size:.8rem; border-radius: 9999rem;">{{$number_of_requests_project}}</div>
+                    @endif
+                  </a>
+                </li>
+              @endif
 
-                  @foreach ($projects as $project)
-                    <li class="sidebar-item" style="margin:1px;">
-                      <a href="{{route('project.show', ['project_id'=>$project->project_id])}}" class="{{$project->project_id == request()->segment(3) ? ( gettype(request()->segment(4)) == 'string' ? 'link-custom' : '') : 'link-custom' }}" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$project->project_id == request()->segment(3) ? ( gettype(request()->segment(4)) == 'string' ? '' : 'background-color:#4C6EF5; color:#ffff;') : '' }};" aria-expanded="false">
-                        
-                        <div class="row px-2"> 
-                          <span class="col-2">
-                            <i class="ti ti-box-multiple" style="font-size:1.2rem;"></i>
-                          </span>
-                          <span class="hide-menu col-8" style=" font-size:.8rem;">{{$project->project_name}}</span>
-                        </div>
-                      </a>
-                      
-                      @if($project->project_id == request()->segment(3))
+              @if(auth()->user()->role == 'engineering')
+                <li class="nav-small-cap">
+                  <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+                  <span class="hide-menu">Information</span>
+                </li>
+                <li class="sidebar-item">
+                  <a class="sidebar-link" href="{{route('customer.index')}}" aria-expanded="false">
+                    <span>
+                      <i class="ti ti-file-plus"></i>
+                    </span>
+                    <span class="hide-menu">Data Customer</span>
+                  </a>
+                </li>
+                <li class="sidebar-item">
+                  <a class="sidebar-link" href="{{route('project.index')}}" aria-expanded="false">
+                    <span>
+                      <i class="ti ti-file-plus"></i>
+                    </span>
+                    <span class="hide-menu">Data Cable Project</span>
+                  </a>
+                </li>
+              @endif
 
-                        {{-- Inland --}}
-                        <li class="sidebar-item" style="margin-left:1rem;">
-                          @php
-                              $number_of_requests_project = count(DB::table('sor_request')->where('project_id', $project->project_id)->where('status', 'PROCESS')->get());   
-                          @endphp
-                          <a class="has-arrow" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px;" href="#" aria-expanded="false">
-                            <div class="row"> 
-                              <span class="col-2">
-                                <i class="ti ti-shovel" style="font-size:1.2rem;"></i>
-                              </span>
-                              <span class="hide-menu col-10" style="font-size:.8rem;">Inland</span>
-                            </div>
-                          </a>
-                          @php
-                            $segments = DB::table('segment')->where('project_id', $project->project_id)->get();
-                          @endphp
+              <li class="nav-small-cap">
+                <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+                <span class="hide-menu">Cable System</span>
+              </li>
+              
+              
+              @foreach ($projects as $project)
+                <li class="sidebar-item" style="margin:1px;">
+                  <a href="{{route('project.show', ['project_id'=>$project->project_id, 'route_id'=>'-'])}}" class="{{$project->project_id == request()->segment(3) ? ( request()->segment(4) == 'link-custom' ? '' : '' ) : '' }}" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$project->project_id == request()->segment(3) ? ( request()->segment(4) == '-' ? 'background-color:#4C6EF5; color:#ffff;' : '' )  : '' }};" aria-expanded="false">
+                    
+                    <div class="row px-2"> 
+                      <span class="col-2">
+                        <i class="ti ti-box-multiple" style="font-size:1.2rem;"></i>
+                      </span>
+                      <span class="hide-menu col-8" style=" font-size:.8rem;">{{$project->project_name}}</span>
+                    </div>
+                  </a>
 
-                          <ul aria-expanded="false" class="collapse two-level" style=" margin-left:1rem;">
-                            @foreach ($segments as $segment)
+                  @if($project->project_id == request()->segment(3))
 
-                              @php
-                                $check_section_cable_type = DB::table('section')->where('segment_id', $segment->segment_id)->where('cable_category', 'INLAND')->get();
-                              @endphp
-                              
-                              @if($check_section_cable_type->isNotEmpty())
-                                <li class="border-with-dot sidebar-item">
-                                  <a href="{{route('segment.show', ['project_id'=>$project->project_id, 'segment_id'=>$segment->segment_id])}}" class="{{$segment->segment_id == request()->segment(4) ? ( gettype(request()->segment(5)) == 'string' ? 'link-custom' : '') : 'link-custom' }}" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$segment->segment_id == request()->segment(4) ? ( gettype(request()->segment(5)) == 'string' ? '' : 'background-color:#4C6EF5; color:#ffff;') : '' }};" aria-expanded="false">
-                                    <span class="hide-menu " style="font-size:.8rem;">{{$segment->segment_name}}</span>
-                                  </a>
+                    @for($y = 1; $y <= 3; $y++)
+                      @php
+                        switch ($y) {
+                          case 1:
+                            $route_icon = 'submarine';
+                            $route_name = 'SUBMARINE';
+                            break;
+                          case 2:
+                            $route_icon = 'shovel';
+                            $route_name = 'INLAND';
+                            break;
+                          case 3:
+                            $route_icon = 'truck';
+                            $route_name = 'LASTMILE';
+                            break;
+                          
+                          default:
+                            echo '-';
+                            break;
+                        }
+                      @endphp
+                      <li class="sidebar-item" style="margin-left:1rem;">
+                        <a class="has-arrow" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px;" href="#" aria-expanded="false">
+                          <div class="row"> 
+                            <span class="col-2">
+                              <i class="ti ti-{{$route_icon}}" style="font-size:1.2rem;"></i>
+                            </span>
+                            <span class="hide-menu col-10" style="font-size:.8rem;">
+                              {{$route_name}}
+                            </span>
+                          </div>
+                        </a>
+                        @php
+                          $segments = DB::table('segment')->where('project_id', $project->project_id)->where('route_id', $y)->get();
+                        @endphp
+                        <ul aria-expanded="false" class="collapse two-level" style=" margin-left:1rem;">
+                          @foreach ($segments as $segment)
+                            <li class="border-with-dot sidebar-item">
+                              <a href="{{route('segment.show', ['project_id'=>$project->project_id, 'route_id'=>$segment->route_id, 'segment_id'=>$segment->segment_id])}}" class="{{$segment->segment_id == request()->segment(5) ? ( gettype(request()->segment(6)) == 'string' ? 'link-custom' : '') : 'link-custom' }}" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$segment->segment_id == request()->segment(5) ? ( gettype(request()->segment(6)) == 'string' ? '' : 'background-color:#4C6EF5; color:#ffff;') : '' }};" aria-expanded="false">
+                                <span class="hide-menu " style="font-size:.8rem;">{{$segment->segment_name}}</span>
+                              </a>
 
-                                  @if($segment->segment_id == request()->segment(4))
-                                    @php
-                                      $sections = DB::table('section')
-                                          ->where('segment_id', $segment->segment_id)
-                                          ->where('cable_category', 'INLAND')
-                                          ->get();
-                                    @endphp
+                              @if($segment->segment_id == request()->segment(5))
+                                @php
+                                  $sections = DB::table('section')
+                                      ->where('project_id', $project->project_id)
+                                      ->where('route_id', $segment->route_id)
+                                      ->where('segment_id', $segment->segment_id)
+                                      ->get();
+                                @endphp
+                                
+                                @foreach($sections as $section)
+                                  <ul aria-expanded="false" class="border-with-dot-secondary collapse two-level in" style=" margin-left:1rem;">
+                                    <li class="sidebar-item">
+                                      @php
+                                        switch ($section->section_route) {
+                                          case '1_route':
+                                              $section->section_route = 'MAIN';
+                                              $badge_color = '#f07a47';  // Bright Orange (remains the same)
+                                              break;
 
-                                    @foreach($sections as $section)
-                                      <ul aria-expanded="false" class="border-with-dot-secondary collapse two-level in" style=" margin-left:1rem;">
-                                        <li class="sidebar-item">
-                                          @php
-                                            switch ($section->section_route) {
-                                              case '1_route':
-                                                  $section->section_route = 'MAIN';
-                                                  $badge_color = '#f07a47';  // Bright Orange (remains the same)
-                                                  break;
+                                          case '2_route':
+                                              $section->section_route = 'DIVERSITY';
+                                              $badge_color = '#6aa84f';  // Soft Green
+                                              break;
 
-                                              case '2_route':
-                                                  $section->section_route = 'DIVERSITY';
-                                                  $badge_color = '#6aa84f';  // Soft Green
-                                                  break;
+                                          case '3_route':
+                                              $section->section_route = '3RD ROUTE';
+                                              $badge_color = '#3c78d8';  // Calm Blue
+                                              break;
 
-                                              case '3_route':
-                                                  $section->section_route = '3RD ROUTE';
-                                                  $badge_color = '#3c78d8';  // Calm Blue
-                                                  break;
+                                          case '4_route':
+                                              $section->section_route = '4TH ROUTE';
+                                              $badge_color = '#f6b26b';  // Warm Peach
+                                              break;
 
-                                              case '4_route':
-                                                  $section->section_route = '4TH ROUTE';
-                                                  $badge_color = '#f6b26b';  // Warm Peach
-                                                  break;
-
-                                              default:
-                                                  $section->section_route = 'MAIN';
-                                                  $badge_color = '#f07a47';  // Bright Orange (default)
-                                                  break;
-                                            }
-                                          @endphp
-                                          <a href="{{route('section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id])}}" class="{{$section->section_id == request()->segment(5) ? ( gettype(request()->segment(6)) == 'string' ? 'link-custom' : '') : 'link-custom' }}" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$section->section_id == request()->segment(5) ? ( gettype(request()->segment(6)) == 'string' ? '' : 'background-color:#4C6EF5; color:#ffff;') : '' }};" aria-expanded="false">
-                                            <div class="round-16 d-flex align-items-center justify-content-center"></div>
-                                            <span class="hide-menu" style="font-size:.8rem;"> 
-                                              <span style="font-size: .6rem; background: {{$badge_color}};" class="badge fw-semibold py-1 w-85 text-white">{{$section->section_route}}</span>
-                                            {{$section->section_name}}</span>
-                                          </a>
-                                          @if($section->section_id == request()->segment(5))
-                                            @php
-                                                $sub_sections = DB::table('sub_section')
-                                                ->where('section_id', $section->section_id)
-                                                ->get();
-                                            @endphp
-                                            @foreach($sub_sections as $sub_section)
-                                              <ul aria-expanded="false" class="border-with-dot-secondary collapse two-level in" style=" margin-left:1rem;">
-                                                <li class="sidebar-item"> 
-                                                  <a href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id'=> $sub_section->sub_section_id])}}"  style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$sub_section->sub_section_id == request()->segment(6) ? 'background-color:#4C6EF5; color:#ffff;' : '' }};" aria-expanded="false">
-                                                    <div class="round-16 d-flex align-items-center justify-content-center"></div>
-                                                      <span class="hide-menu" style="font-size:.8rem;"> 
-                                                        <span style="font-size: .6rem;" class="badge bg-light-primary text-primary fw-semibold py-1 w-85 text-uppercase">{{$sub_section->sub_owner}}</span> {{$sub_section->sub_section_name}}
-                                                      </span>
-                                                  </a>
-                                                </li> 
-                                              </ul>
-                                            @endforeach
-                                          @endif
-                                        </li>
-                                      </ul>
-                                    @endforeach
-                                  @endif
-                                </li>
+                                          default:
+                                              $section->section_route = 'MAIN';
+                                              $badge_color = '#f07a47';  // Bright Orange (default)
+                                              break;
+                                        }
+                                      @endphp
+                                      <a href="{{route('section.show', ['project_id'=>$project->project_id, 'route_id'=> $segment->route_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id])}}" class="{{$section->section_id == request()->segment(6) ? ( gettype(request()->segment(7)) == 'string' ? 'link-custom' : '') : 'link-custom' }}" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$section->section_id == request()->segment(6) ? ( gettype(request()->segment(7)) == 'string' ? '' : 'background-color:#4C6EF5; color:#ffff;') : '' }};" aria-expanded="false">
+                                        <div class="round-16 d-flex align-items-center justify-content-center"></div>
+                                        <span class="hide-menu" style="font-size:.8rem;"> 
+                                          <span style="font-size: .6rem; background: {{$badge_color}};" class="badge fw-semibold py-1 w-85 text-white">{{$section->section_route}}</span>
+                                        {{$section->section_name}}</span>
+                                      </a>
+                                      @if($section->section_id == request()->segment(6))
+                                        @php
+                                            $sub_sections = DB::table('sub_section')
+                                            ->where('project_id', $project->project_id)
+                                            ->where('segment_id', $segment->segment_id)
+                                            ->where('section_id', $section->section_id)
+                                            ->orderByRaw('CAST(customer_id AS UNSIGNED) ASC')
+                                            ->get();
+                                        @endphp
+                                        @foreach($sub_sections as $sub_section)
+                                          <ul aria-expanded="false" class="border-with-dot-secondary collapse two-level in" style=" margin-left:1rem;">
+                                            <li class="sidebar-item"> 
+                                              @if($sub_section->type_id == null || $sub_section->type_id == '')
+                                                <a href="{{route('sub_section.show', ['project_id'=>$project->project_id,'route_id'=>$segment->route_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'customer_id'=> $sub_section->customer_id, 'type_id'=> '-', 'sub_section_id'=> $sub_section->sub_section_id])}}"  style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{($sub_section->customer_id == request()->segment(7) && '-' == request()->segment(8) && $sub_section->sub_section_id == request()->segment(9) ) ? 'background-color:#4C6EF5; color:#ffff;' : '' }};" aria-expanded="false">
+                                                  <div class="round-16 d-flex align-items-center justify-content-center"></div>
+                                                    <span class="hide-menu" style="font-size:.8rem;"> 
+                                                      <span style="font-size: .6rem;" class="badge bg-light-primary text-primary fw-semibold py-1 w-85 text-uppercase">{{ DB::table('customer')->where('customer_id', $sub_section->customer_id)->get()->first()->customer_name}}</span> {{$sub_section->sub_section_name}}
+                                                    </span>
+                                                </a>
+                                              @else
+                                                <a href="{{route('sub_section.show', ['project_id'=>$project->project_id,'route_id'=>$segment->route_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'customer_id'=> $sub_section->customer_id, 'type_id'=> $sub_section->type_id, 'sub_section_id'=> $sub_section->sub_section_id])}}"  style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{($sub_section->customer_id == request()->segment(7) && $sub_section->type_id == request()->segment(8) && $sub_section->sub_section_id == request()->segment(9) ) ? 'background-color:#4C6EF5; color:#ffff;' : '' }};" aria-expanded="false">
+                                                  <div class="round-16 d-flex align-items-center justify-content-center"></div>
+                                                    <span class="hide-menu" style="font-size:.8rem;"> 
+                                                      <span style="font-size: .6rem;" class="badge bg-light-primary text-primary fw-semibold py-1 w-85 text-uppercase">{{ DB::table('customer')->where('customer_id', $sub_section->customer_id)->get()->first()->customer_name}}</span> {{$sub_section->sub_section_name}}
+                                                    </span>
+                                                </a>
+                                              @endif
+                                            </li> 
+                                          </ul>
+                                        @endforeach
+                                      @endif
+                                    </li>
+                                  </ul>
+                                @endforeach
                               @endif
-                            @endforeach
-                          </ul>
-                        </li>
-                        {{-- Inland --}}
-
-                        {{-- Submarine --}}
-                        <li class="sidebar-item" style="margin-left:1rem;">
-                          <a class="has-arrow" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px;" href="#" aria-expanded="false">
-                            <div class="row"> 
-                              <span class="col-2">
-                                <i class="ti ti-submarine" style="font-size:1.2rem;"></i>
-                              </span>
-                              <span class="hide-menu col-10" style="font-size:.8rem;">Submarine</span>
-                            </div>
-                          </a>
-                          @php
-                            $segments = DB::table('segment')->where('project_id', $project->project_id)->get();
-                          @endphp
-
-                          <ul aria-expanded="false" class="collapse two-level" style=" margin-left:1rem;">
-                            @foreach ($segments as $segment)
-
-                              @php
-                                $check_section_cable_type = DB::table('section')->where('segment_id', $segment->segment_id)->where('cable_category', 'SUBMARINE')->get();
-                              @endphp
-                              
-                              @if($check_section_cable_type->isNotEmpty())
-                                <li class="border-with-dot sidebar-item">
-                                  <a href="{{route('segment.show', ['project_id'=>$project->project_id, 'segment_id'=>$segment->segment_id])}}" class="{{$segment->segment_id == request()->segment(4) ? ( gettype(request()->segment(5)) == 'string' ? 'link-custom' : '') : 'link-custom' }}" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$segment->segment_id == request()->segment(4) ? ( gettype(request()->segment(5)) == 'string' ? '' : 'background-color:#4C6EF5; color:#ffff;') : '' }};" aria-expanded="false">
-                                    <span class="hide-menu " style="font-size:.8rem;">{{$segment->segment_name}}</span>
-                                  </a>
-
-                                  @if($segment->segment_id == request()->segment(4))
-                                    @php
-                                      $sections = DB::table('section')
-                                          ->where('segment_id', $segment->segment_id)
-                                          ->where('cable_category', 'SUBMARINE')
-                                          ->get();
-                                    @endphp
-
-                                    @foreach($sections as $section)
-                                      <ul aria-expanded="false" class="border-with-dot-secondary collapse two-level in" style=" margin-left:1rem;">
-                                        <li class="sidebar-item">
-                                          @php
-                                            switch ($section->section_route) {
-                                              case '1_route':
-                                                  $section->section_route = 'MAIN';
-                                                  $badge_color = '#f07a47';  // Bright Orange (remains the same)
-                                                  break;
-
-                                              case '2_route':
-                                                  $section->section_route = 'DIVERSITY';
-                                                  $badge_color = '#6aa84f';  // Soft Green
-                                                  break;
-
-                                              case '3_route':
-                                                  $section->section_route = '3RD ROUTE';
-                                                  $badge_color = '#3c78d8';  // Calm Blue
-                                                  break;
-
-                                              case '4_route':
-                                                  $section->section_route = '4TH ROUTE';
-                                                  $badge_color = '#f6b26b';  // Warm Peach
-                                                  break;
-
-                                              default:
-                                                  $section->section_route = 'MAIN';
-                                                  $badge_color = '#f07a47';  // Bright Orange (default)
-                                                  break;
-                                            }
-                                          @endphp
-                                          <a href="{{route('section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id])}}" class="{{$section->section_id == request()->segment(5) ? ( gettype(request()->segment(6)) == 'string' ? 'link-custom' : '') : 'link-custom' }}" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$section->section_id == request()->segment(5) ? ( gettype(request()->segment(6)) == 'string' ? '' : 'background-color:#4C6EF5; color:#ffff;') : '' }};" aria-expanded="false">
-                                            <div class="round-16 d-flex align-items-center justify-content-center"></div>
-                                            <span class="hide-menu" style="font-size:.8rem;"> 
-                                              <span style="font-size: .6rem; background: {{$badge_color}};" class="badge fw-semibold py-1 w-85 text-white">{{$section->section_route}}</span>
-                                            {{$section->section_name}}</span>
-                                          </a>
-                                          @if($section->section_id == request()->segment(5))
-                                            @php
-                                                $sub_sections = DB::table('sub_section')
-                                                ->where('section_id', $section->section_id)
-                                                ->get();
-                                            @endphp
-                                            @foreach($sub_sections as $sub_section)
-                                              <ul aria-expanded="false" class="border-with-dot-secondary collapse two-level in" style=" margin-left:1rem;">
-                                                <li class="sidebar-item"> 
-                                                  <a href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id'=> $sub_section->sub_section_id])}}"  style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$sub_section->sub_section_id == request()->segment(6) ? 'background-color:#4C6EF5; color:#ffff;' : '' }};" aria-expanded="false">
-                                                    <div class="round-16 d-flex align-items-center justify-content-center"></div>
-                                                      <span class="hide-menu" style="font-size:.8rem;"> 
-                                                        <span style="font-size: .6rem;" class="badge bg-light-primary text-primary fw-semibold py-1 w-85 text-uppercase">{{$sub_section->sub_owner}}</span> {{$sub_section->sub_section_name}}
-                                                      </span>
-                                                  </a>
-                                                </li> 
-                                              </ul>
-                                            @endforeach   
-                                          @endif
-                                        </li>
-                                      </ul>
-                                    @endforeach
-                                  @endif
-                                </li>
-                              @endif
-                            @endforeach
-                          </ul>
-                        </li>
-                        {{-- Submarine --}}
-
-                        {{-- Lastmile --}}
-                        <li class="sidebar-item" style="margin-left:1rem;">
-                          <a class="has-arrow" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px;" href="#" aria-expanded="false">
-                            <div class="row"> 
-                              <span class="col-2">
-                                <i class="ti ti-truck" style="font-size:1.2rem;"></i>
-                              </span>
-                              <span class="hide-menu col-10" style="font-size:.8rem;">Lastmile</span>
-                            </div>
-                          </a>
-                          @php
-                            $segments = DB::table('segment')->where('project_id', $project->project_id)->get();
-                          @endphp
-
-                          <ul aria-expanded="false" class="collapse two-level" style=" margin-left:1rem;">
-                            @foreach ($segments as $segment)
-
-                              @php
-                                $check_section_cable_type = DB::table('section')->where('segment_id', $segment->segment_id)->where('cable_category', 'LASTMILE')->get();
-                              @endphp
-                              
-                              @if($check_section_cable_type->isNotEmpty())
-                                <li class="border-with-dot sidebar-item">
-                                  <a href="{{route('segment.show', ['project_id'=>$project->project_id, 'segment_id'=>$segment->segment_id])}}" class="{{$segment->segment_id == request()->segment(4) ? ( gettype(request()->segment(5)) == 'string' ? 'link-custom' : '') : 'link-custom' }}" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$segment->segment_id == request()->segment(4) ? ( gettype(request()->segment(5)) == 'string' ? '' : 'background-color:#4C6EF5; color:#ffff;') : '' }};" aria-expanded="false">
-                                    <span class="hide-menu " style="font-size:.8rem;">{{$segment->segment_name}}</span>
-                                  </a>
-
-                                  @if($segment->segment_id == request()->segment(4))
-                                    @php
-                                      $sections = DB::table('section')
-                                          ->where('segment_id', $segment->segment_id)
-                                          ->where('cable_category', 'LASTMILE')
-                                          ->get();
-                                    @endphp
-
-                                    @foreach($sections as $section)
-                                      <ul aria-expanded="false" class="border-with-dot-secondary collapse two-level in" style=" margin-left:1rem;">
-                                        <li class="sidebar-item">
-                                          @php
-                                            switch ($section->section_route) {
-                                              case '1_route':
-                                                  $section->section_route = 'MAIN';
-                                                  $badge_color = '#f07a47';  // Bright Orange (remains the same)
-                                                  break;
-
-                                              case '2_route':
-                                                  $section->section_route = 'DIVERSITY';
-                                                  $badge_color = '#6aa84f';  // Soft Green
-                                                  break;
-
-                                              case '3_route':
-                                                  $section->section_route = '3RD ROUTE';
-                                                  $badge_color = '#3c78d8';  // Calm Blue
-                                                  break;
-
-                                              case '4_route':
-                                                  $section->section_route = '4TH ROUTE';
-                                                  $badge_color = '#f6b26b';  // Warm Peach
-                                                  break;
-
-                                              default:
-                                                  $section->section_route = 'MAIN';
-                                                  $badge_color = '#f07a47';  // Bright Orange (default)
-                                                  break;
-                                            }
-                                          @endphp
-                                          <a href="{{route('section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id])}}" class="{{$section->section_id == request()->segment(5) ? ( gettype(request()->segment(6)) == 'string' ? 'link-custom' : '') : 'link-custom' }}" style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$section->section_id == request()->segment(5) ? ( gettype(request()->segment(6)) == 'string' ? '' : 'background-color:#4C6EF5; color:#ffff;') : '' }};" aria-expanded="false">
-                                            <div class="round-16 d-flex align-items-center justify-content-center"></div>
-                                            <span class="hide-menu" style="font-size:.8rem;"> 
-                                              <span style="font-size: .6rem; background: {{$badge_color}};" class="badge fw-semibold py-1 w-85 text-white">{{$section->section_route}}</span>
-                                            {{$section->section_name}}</span>
-                                          </a>
-                                          @if($section->section_id == request()->segment(5))
-                                            @php
-                                                $sub_sections = DB::table('sub_section')
-                                                ->where('section_id', $section->section_id)
-                                                ->get();
-                                            @endphp
-                                            @foreach($sub_sections as $sub_section)
-                                              <ul aria-expanded="false" class="border-with-dot-secondary collapse two-level in" style=" margin-left:1rem;">
-                                                <li class="sidebar-item"> 
-                                                  <a href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id'=> $sub_section->sub_section_id])}}"  style="padding:.6rem .6rem; color:black; display:inline; display:block; border-radius:8px; {{$sub_section->sub_section_id == request()->segment(6) ? 'background-color:#4C6EF5; color:#ffff;' : '' }};" aria-expanded="false">
-                                                    <div class="round-16 d-flex align-items-center justify-content-center"></div>
-                                                      <span class="hide-menu" style="font-size:.8rem;"> 
-                                                        <span style="font-size: .6rem;" class="badge bg-light-primary text-primary fw-semibold py-1 w-85 text-uppercase">{{$sub_section->sub_owner}}</span> {{$sub_section->sub_section_name}}
-                                                      </span>
-                                                  </a>
-                                                </li> 
-                                              </ul>
-                                            @endforeach
-                                          @endif
-                                        </li>
-                                      </ul>
-                                    @endforeach
-                                  @endif
-                                </li>
-                              @endif
-                            @endforeach
-                          </ul>
-                        </li>
-                        {{-- Lastmile --}}
-
-                      @endif
-                    </li>
-                  @endforeach
-                </ul>
-                <div style="height: 3rem;"></div>
-              </nav>
-              <!-- End Sidebar navigation -->
-
-          @endif
+                            </li>
+                          @endforeach
+                        </ul>
+                      </li>
+                    @endfor
+                  @endif
+                  
+                </li>
+              @endforeach
+            </ul>
+            <div style="height: 3rem;"></div>
+          </nav>
+          <!-- End Sidebar navigation -->
 
 
         </div>
@@ -652,13 +496,6 @@
           </header>
           
         <!--  Header End -->
-        {{-- <div class="container-fluid"> --}}
-        <div style="width:90%; margin:auto;">
-          <div class="row">
-            
-          </div>
-          
-        </div>
         <div style="width:90%; margin:auto;" >
           <div style="min-height: 7rem;"></div>
             @if(url()->current() !== 'https://cms.triasmitra.com/public/hashmicro/index')
@@ -679,7 +516,7 @@
                 </div>
               </div>
             @endif
-
+            
             @if ($message = Session::get('error'))
               <div class="alert alert-danger">
                 <div style="cursor:pointer; font-size:1rem;" data-dismiss="alert" class="delete_button inline-block">
@@ -689,22 +526,69 @@
               </div>
             @endif
 
+            <!-- Modal -->
+            <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="searchModalLabel">SEARCH</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <form action="{{ route('search') }}" method="POST" class="position-relative" enctype=multipart/form-data>
+                    @csrf
+                    <div class="modal-body">
+                      <div class="my-3">
+                        <label for="search_project" class="form-label">Cable Project</label>
+                        <select name="project" id="search_project" class="form-select">
+                          <option value="">Select one...</option>
+                          @foreach ($projects as $project)
+                            <option value="{{ $project->project_id }}">{{ $project->project_name }}</option>
+                          @endforeach
+                        </select>
+                      </div>
+                      <div class="my-3">
+                        <label for="route" class="form-label">Cable Category</label>
+                        <select name="route" id="search_route" class="form-select">
+                          <option value="2">INLAND</option>
+                          <option value="1">SUBMARINE</option>
+                          <option value="3">LASTMILE</option>
+                        </select>
+                      </div>
+                      <div class="my-3">
+                        <label for="route" class="form-label">Segment</label>
+                        <select name="segment" id="search_segment" class="form-select" disabled>
+                          <option value="">Select one...</option>
+                        </select>
+                      </div>
+                      <div class="my-3">
+                        <label for="search_section" class="form-label">Sections</label>
+                        <br>
+                        <select name="section" id="search_section" class="form-select" disabled>
+                          <option value="">Select one...</option>
+                        </select>
+                      </div>
+                      <div class="my-3">
+                        <label for="search_sub_section" class="form-label">Customer</label>
+                        <select name="sub_section" id="search_sub_section" class="form-select" disabled>
+                          <option value="">Select one...</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="modal-footer d-flex justify-content-between align-items-center">
+                      <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                      <button type="submit" class="btn btn-primary px-5">SEARCH</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
             @yield('content')
         </div>
         <div style="min-height: 10rem;"></div>
       </div>
-
-      
     </div>
-
-    <script>
-        new DataTable('#example');
-
-        $(function () {
-          $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
-
+  
   <!-- Bootstrap JavaScript -->
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
@@ -719,7 +603,161 @@
   <script src="{{ asset('layout/libs/apexcharts/dist/apexcharts.min.js') }}"></script>
   <script src="{{ asset('layout/libs/simplebar/dist/simplebar.js') }}"></script>
   <script src="{{ asset('layout/js/dashboard.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+      new DataTable('#example');
+
+      $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+      })
+  </script>
+
+  <script>
+    $(document).ready(function() {
+      $('#search_project').select2({
+        dropdownParent: $('#searchModal'),
+        placeholder: 'Select a project',
+        allowClear: true
+      });
+      $('#search_route').select2({
+        dropdownParent: $('#searchModal'),
+        placeholder: 'Select a route',
+        allowClear: true
+      });
+      $('#search_segment').select2({
+        dropdownParent: $('#searchModal'),
+        placeholder: 'Select a segment',
+        allowClear: true
+      });
+      $('#search_section').select2({
+        dropdownParent: $('#searchModal'),
+        placeholder: 'Select a section',
+        allowClear: true
+      });
+      $('#search_sub_section').select2({
+        dropdownParent: $('#searchModal'),
+        placeholder: 'Select a sub section',
+        allowClear: true
+      });
+    });
+  </script>
+
+  <script>
+    $('#search_project, select[name="route"]').on('change', function () {
+      let projectId = $('#search_project').val();
+      let routeId = $('select[name="route"]').val();
+      let segmentSelect = $('#search_segment');
+
+      console.log('Selected projectId:', projectId);
+      console.log('Selected routeId:', routeId);
+
+      // Reset and disable segment select before AJAX
+      segmentSelect.empty().append(`<option value="">Select one...</option>`);
+      segmentSelect.prop('disabled', true);
+
+      if (projectId && routeId) {
+        $.ajax({
+          url: `/cms_dev/public/get-segments/${projectId}/${routeId}`,
+          type: 'GET',
+          success: function (segments) {
+            if (segments.length > 0) {
+              segments.forEach(function (segment) {
+                segmentSelect.append(`<option value="${segment.segment_id}">${segment.segment_name}</option>`);
+              });
+              segmentSelect.prop('disabled', false); // Enable if data found
+            } else {
+              alert('Segment for this project is not exist!');
+              segmentSelect.append(`<option value="">No segments found</option>`);
+            }
+          },
+          error: function () {
+            console.error('Failed to fetch segments.');
+            segmentSelect.append(`<option value="">Error loading segments</option>`);
+          }
+        });
+      }
+    });
+
+    $('select[name="project"], select[name="route"], select[name="segment"]').on('change', function () {
+      let projectId = $('#search_project').val();
+      let routeId = $('select[name="route"]').val();
+      let segmentId = $('select[name="segment"]').val();
+      let sectionSelect = $('#search_section');
+
+      // Reset section select
+      sectionSelect.empty().append(`<option value="">Select one...</option>`);
+      sectionSelect.prop('disabled', true);
+
+      if (projectId && routeId && segmentId) {
+        $.ajax({
+          url: `/cms_dev/public/get-sections/${projectId}/${routeId}/${segmentId}`,
+          type: 'GET',
+          success: function (sections) {
+            if (sections.length > 0) {
+              sections.forEach(function (section) {
+                sectionSelect.append(`<option value="${section.section_id}">${section.section_name}</option>`);
+              });
+              sectionSelect.prop('disabled', false);
+            } else {
+              alert('Sections for this Segment is not exist!');
+              sectionSelect.append(`<option value="">No sections found</option>`);
+            }
+          },
+          error: function () {
+            console.error('Failed to fetch sections.');
+            sectionSelect.append(`<option value="">Error loading sections</option>`);
+          }
+        });
+      }
+    });
+
+    $('select[name="project"], select[name="route"], select[name="segment"], select[name="section"]').on('change', function () {
+      let projectId = $('#search_project').val();
+      let routeId = $('select[name="route"]').val();
+      let segmentId = $('select[name="segment"]').val();
+      let sectionId = $('select[name="section"]').val();
+      let subSectionSelect = $('#search_sub_section');
+
+      
+      console.log('Selected projectId:', projectId);
+      console.log('Selected routeId:', routeId);
+      console.log('Selected segmentId:', segmentId);
+      console.log('Selected sectionId:', sectionId);
+
+      // Reset section select
+      subSectionSelect.empty().append(`<option value="">Select one...</option>`);
+      subSectionSelect.prop('disabled', true);
+
+      if (projectId && routeId && segmentId && sectionId) {
+        $.ajax({
+          url: `/cms_dev/public/get-sub-sections/${projectId}/${routeId}/${segmentId}/${sectionId}`,
+          type: 'GET',
+          success: function (sub_sections) {
+            if (sub_sections.length > 0) {
+              sub_sections.forEach(function (sub_section) {
+                subSectionSelect.append(`<option value="${sub_section.sub_section_id}"> [ <span style="font-weight:bold;" >${sub_section.customer_name}</span> ] ${sub_section.sub_section_name}</option>`);
+              });
+              subSectionSelect.prop('disabled', false);
+            } else {
+              alert('Sub Sections for this Sections is not exist!');
+              subSectionSelect.append(`<option value="">No sub sections found</option>`);
+            }
+          },
+          error: function () {
+            console.error('Failed to fetch sub sections.');
+            subSectionSelect.append(`<option value="">Error loading subSections</option>`);
+          }
+        });
+      }
+
+    });
+    
+    
+  </script>
+
+
   @yield('script')
+  
   
 </body>
 

@@ -47,20 +47,6 @@ class SectionController extends Controller
         }
 
         try {
-            // Check if any section_id already exists in the database for the given segment_id
-            $existingSections = DB::table('section')
-                ->where('project_id', $project_id)
-                ->where('route_id', $route_id)
-                ->where('segment_id', $segment_id)
-                ->whereIn('section_id', $request->section_id)
-                ->pluck('section_id')
-                ->toArray();
-            
-            if (!empty($existingSections)) {
-                return redirect()->back()->with('error', 'Some Section IDs already exist: ' . implode(', ', $existingSections));
-            }
-
-
             // Loop through the inputs and insert into the database
             for ($i = 0; $i < $jumlah_section; $i++) {
                 $section_name =  $request->section_name[$i];
@@ -95,44 +81,91 @@ class SectionController extends Controller
             return redirect(route('segment.show', ['project_id' => $project_id,'route_id' => $route_id,'segment_id' => $segment_id]))
                 ->with('error', 'An unexpected error occurred: ' . $e->getMessage());
         }
+
+
+
     }
 
-    public function edit($project_id, $route_id, $segment_id)
+    public function edit($project_id, $route_id, $segment_id, $section_id)
     {
         return view('section.edit')
         ->with('project_id', $project_id)
         ->with('route_id', $route_id)
-        ->with('segment_id', $segment_id);
+        ->with('segment_id', $segment_id)
+        ->with('section_id', $section_id);
         
     }
 
     public function update(Request $request)
     {
+        DB::table('section')->where('project_id', $request->project_id)->where('route_id', $request->route_id)->where('segment_id', $request->segment_id)->where('section_id', $request->section_id)->update([
+            'section_name' => $request->section_name,
+            'cable_type' => $request->cable_type,
+            'first_rfs' => $request->first_rfs,
+            'near_end' => $request->near_end,
+            'far_end' => $request->far_end,
+            'section_route' => $request->section_route,
+            'core_capacity' => $request->section_core_capacity,
+        ]);
+        
+        $jumlah_sub_section = count($request->sub_section_id);
 
-        $jumlah_section = count($request->section_id);
+        for ($i = 0; $i < $jumlah_sub_section; $i++) {
+            DB::table('sub_section')->where('project_id', $request->project_id)->where('route_id', $request->route_id)->where('segment_id', $request->segment_id)->where('section_id', $request->section_id)->where('sub_section_id', $request->sub_section_id[$i])->update([
+                'sub_section_name' => $request->sub_section_name[$i],
+                'sub_near_end' => $request->sub_near_end[$i],
+                'sub_far_end' => $request->sub_far_end[$i],
+                'customer_id' => $request->sub_owner[$i],
+                'sub_site_owner_near_end' => $request->sub_site_owner_near_end[$i],
+                'sub_site_owner_far_end' => $request->sub_site_owner_far_end[$i],
+                'sub_initial_length' => $request->sub_initial_length[$i],
+                'sub_initial_min_total_loss' => $request->sub_initial_min_total_loss[$i],
+                'sub_initial_max_total_loss' => $request->sub_initial_max_total_loss[$i],
+            ]);
 
-        for ($i = 0; $i < $jumlah_section; $i++) {
-            $parts = explode(' - ', $request->section_name[$i]);
-            $near_end = trim($parts[0]); 
-            $far_end = trim($parts[1]); 
-    
-            DB::table('section')
+            $cores = DB::table('core')
             ->where('project_id', $request->project_id)
             ->where('route_id', $request->route_id)
             ->where('segment_id', $request->segment_id)
-            ->where('section_id', $request->section_id[$i])
-            ->update([
-                'section_name' => $request->section_name[$i],
-                'near_end' => $near_end,
-                'far_end' => $far_end,
-                'section_route' => $request->section_route[$i],
-                'core_capacity' => $request->core_capacity[$i],
-                'cable_type' => $request->cable_type[$i],
-                'first_rfs' => $request->first_rfs[$i],
-            ]);
+            ->where('section_id', $request->section_id)
+            ->where('sub_section_id', $request->sub_section_id[$i])
+            ->get();
+
+            foreach($cores as $core){
+                $length = $request->sub_initial_length[$i];
+                $min_total_loss = $request->sub_initial_min_total_loss[$i];
+                $max_total_loss = $request->sub_initial_max_total_loss[$i];
+                
+                if($length == '' || $length == null){
+                    $initial_remarks = "NOT OK";
+                }else{
+                    if($core->initial_end_cable >= $length ){
+                        if( $core->initial_total_loss_db <= $max_total_loss ){
+                            $initial_remarks = "OK";
+                        }else{
+                            $initial_remarks = "NOT OK";
+                        }
+                    }else{
+                        $initial_remarks = 'NOT OK';
+                    }
+                }
+
+                DB::table('core')
+                ->where('project_id', $request->project_id)
+                ->where('route_id', $request->route_id)
+                ->where('segment_id', $request->segment_id)
+                ->where('section_id', $request->section_id)
+                ->where('sub_section_id', $request->sub_section_id[$i])
+                ->where('core', $core->core)
+                ->update([
+                    'initial_remarks' => $initial_remarks,
+                ]);
+
+            }
+
         }
 
-        return redirect(route('segment.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=>$request->segment_id]))->with('success', 'Ssections is successfully updated !!');
+        return redirect(route('section.show', ['project_id'=>$request->project_id, 'route_id'=>$request->route_id, 'segment_id'=>$request->segment_id, 'section_id'=>$request->section_id]))->with('success', 'Data is successfully updated !!');
     
     }
 

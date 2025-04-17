@@ -54,7 +54,6 @@
                         <a style="font-size:1rem;" class="nav-link" href="javascript:void(0)" id="drop2"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             {{ auth()->user()->name }} &nbsp;&nbsp; <i class="ti ti-user fs-6"></i>
-
                         </a>
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="drop2">
                             <div class="message-body">
@@ -74,68 +73,21 @@
     <!--  Header End -->
 @endsection
 
-@php
-    $project = DB::table('project')->where('project_id', $project_id)->get()->first();
-    $segments = DB::table('segment')->where('project_id', $project_id)->where('route_id', $route_id)->orderByRaw('CAST(segment_id AS UNSIGNED) ASC')->get();
-
-     switch ($route_id) {
-        case 1:
-            $route_name = 'SUBMARINE';
-            break;
-        case 2:
-            $route_name = 'INLAND';
-            break;
-        case 3:
-            $route_name = 'LASTMILE';
-            break;
-        
-        default:
-            $route_name = 'UNDEFINED';
-            break;
-    }
-@endphp
-
-@section('breadcrumb')
-    <div class="card bg-dark text-white shadow-lg position-relative overflow-hidden">
-        <div class="card-body px-5 py-5">
-            <div class="row align-items-center">
-                <div class="col-9">
-                    <h3 class="fw-semibold text-white" style="font-size: 1.5rem; text-transform: uppercase;"> #{{$project->project_id}} PROJECT {{ ucwords(strtolower($project->project_name)) }} ({{$route_name}})</h3>
-                    <h3 class="fw-semibold text-white" style="font-size: 1.5rem;">  CREATE SEGMENT</h3>
-                    <nav aria-label="breadcrumb" class="mt-3">
-                        <ol class="breadcrumb" style="font-size: 1rem;">
-                            <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="/">Dashboard</a>
-                            </li>
-                            <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project_id, 'route_id'=> $route_id])}}">{{$project->project_name}}</a>
-                            </li>
-                            <li class="breadcrumb-item" aria-current="page">
-                                Create Segment
-                            </li>
-                        </ol>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </div>
-@endsection
 
 @section('breadcrumb')
     <div class="card bg-light-info shadow-none position-relative overflow-hidden">
         <div class="card-body px-4 py-5">
             <div class="row align-items-center">
                 <div class="col-9">
-                    <h3 class="fw-semibold text-white" style="font-size: 1.5rem; text-transform: uppercase;"> #{{$project->project_id}} PROJECT {{ ucwords(strtolower($project->project_name)) }} ({{$route_name}})</h3>
-                    <h3 class="fw-semibold" style="font-size: 2rem;">EDIT SEGMENTS :</h3>
+                    <h3 class="fw-semibold" style="font-size: 2rem;">Create Customer</h3>
                     <hr>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item">
                                 <a class="text-decoration-none" href="/">Dashboard</a>
                             </li>
-                            <li class="breadcrumb-item">
-                                <a class="text-decoration-none">{{$project->project_name}}</a>
+                            <li class="breadcrumb-item" aria-current="page">
+                                Create Customer
                             </li>
                         </ol>
                     </nav>
@@ -144,7 +96,6 @@
         </div>
     </div>
 @endsection
-
 
 
 @section('content')
@@ -152,42 +103,50 @@
         <div class="card-body">
             <div class="card">
                 <div class="card-body">
-                    <form action="{{ route('segment.update') }}" method="POST" enctype=multipart/form-data>
+                    <form action="{{ route('customer.store') }}" method="POST" enctype=multipart/form-data>
                         {{ csrf_field() }}
-                        <input type="hidden" name="route_id" value="{{$route_id}}">
                         <div class="table-responsive">
-                            <table class="table table-bordered text-nowrap mb-0 align-middle" style="margin-top:1rem;">
+                            <table class="table table-stripped text-nowrap mb-0 align-middle" style="margin-top:1rem;">
                                 <thead class="text-dark fs-4">
                                     <tr>
-                                        <th class="">
-                                            <h6 style="display:inline-block; margin-right:.5rem;" class="fw-semibold mb-0">
-                                                Segment ID</h6>
+                                        <th class="text-center">
+                                            <div style="cursor:pointer;" onclick="cloneRow()"
+                                                class="inline-block text-success">
+                                                <i style="font-size:1.5rem;" class="ti ti-square-plus"></i>
+                                            </div>
                                         </th>
-                                        <th class="">
+                                        <th>
                                             <h6 style="display:inline-block; margin-right:.5rem;" class="fw-semibold mb-0">
-                                                Segment Name</h6>
+                                                Customer ID</h6>
+                                        <th>
+                                            <h6 style="display:inline-block; margin-right:.5rem;" class="fw-semibold mb-0">
+                                                Customer Name</h6>
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableToModify">
-                                    <input hidden value="{{ $project_id }}" name="project_id">
-                                    <input hidden value="{{ $route_id }}" name="route_id">
-
-                                    @foreach($segments as $segment)
-                                        <tr id="rowToClone" class="testing2">
-                                            
-
-                                            <input name="segment_id[]" value="{{$segment->segment_id}}" type="hidden">
-                                            <td style="width:10%;">
-                                                <input disabled class="form-control" type="text" value="{{$segment->segment_id}}">
-                                            </td>
-                                            <td style="width:80%;">
-                                                <input class="form-control" class="outline outline-2" name="segment_name[]"
-                                                    type="text" value="{{$segment->segment_name}}">
-                                            </td>
-                                        </tr>
-                                    
-                                    @endforeach
+                                    <tr id="rowToClone">
+                                        <td class="text-center">
+                                            <div style="cursor:pointer;" onclick="hapus(this)"
+                                                class="delete_button inline-block text-danger">
+                                                <i style="font-size:1.5rem;" class="ti ti-square-x"></i>
+                                            </div>
+                                        </td>
+                                        <td style="width:10%;">
+                                            <input 
+                                                class="form-control" 
+                                                name="customer_id[]" 
+                                                type="text" 
+                                                maxlength="3" 
+                                                pattern="\d{3}" 
+                                                title="Please enter exactly 3 digits." 
+                                                required
+                                            >
+                                        </td>
+                                        <td style="width:90%;">
+                                            <input class="form-control" name="customer_name[]" type="text">
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>

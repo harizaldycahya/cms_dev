@@ -26,8 +26,38 @@
             border: thin solid #333;
             border-left: none;
         }
+        
+        .breadcrumb-item a{
+            color: lightblue;
+        }
     </style>
 @endsection
+
+@php
+
+    $project = DB::table('project')->where('project_id', $project_id)->get()->first();
+    $segment = DB::table('segment')->where('route_id', $route_id)->where('segment_id', $segment_id)->get()->first();
+    $section = DB::table('section')->where('route_id', $route_id)->where('segment_id', $segment_id)->where('section_id', $section_id)->get()->first();
+    $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
+
+    switch ($route_id) {
+        case '1':
+            $route_name = 'SUBMARINE';
+            break;
+        case '2':
+            $route_name = 'INLAND';
+            break;
+        case '3':
+            $route_name = 'LASTMILE';
+            break;
+        case '-':
+            $route_name = 'INLAND';
+            break;
+        default:
+            $route_name = 'UNDIFINED';
+            break;
+    }
+@endphp
 
 @section('header')
     <!--  Header Start -->
@@ -76,21 +106,12 @@
 
 
 @section('breadcrumb')
-    <div class="card bg-light-info shadow-none position-relative overflow-hidden">
+    <div class="card bg-dark text-white shadow-lg position-relative overflow-hidden">
         <div class="card-body px-4 py-5">
             <div class="row align-items-center">
                 <div class="col-9">
-                    <h3 class="fw-semibold" style="font-size: 2rem;"> Manage Core : 
-
-                        @if (isset($sub_section_id))
-                            @php
-                                $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-                            @endphp
-
-                            {{$sub_section->sub_section_name}}
-                        @else
-                            {{$section->section_name}}
-                        @endif
+                    <h3 class="fw-semibold text-white" style="font-size: 2rem;"> Manage Core : 
+                            {{$sub_section->sub_section_name}} ({{DB::table('customer')->where('customer_id', $sub_section->customer_id)->get()->first()->customer_name}})
                     </h3>
                     <hr>
                     <nav aria-label="breadcrumb">
@@ -99,25 +120,16 @@
                                 <a class="text-decoration-none" href="/">Dashboard</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project->project_id, 'project_type'=>'inland'])}}">{{$project->project_name}}</a>
+                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project->project_id,'route_id'=> '-', 'project_type'=>'inland'])}}">{{$project->project_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('segment.show', ['project_id'=> $project->project_id, 'project_type'=>'inland', 'segment_id'=>$segment->segment_id])}}">{{$segment->segment_name}}</a>
+                                <a class="text-decoration-none" href="{{route('segment.show', ['project_id'=> $project->project_id,'route_id'=> $route_id, 'project_type'=>'inland', 'segment_id'=>$segment->segment_id])}}">{{$segment->segment_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('section.show', ['project_id'=> $project->project_id, 'project_type'=>'inland', 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id])}}">{{$section->section_name}}</a>
+                                <a class="text-decoration-none" href="{{route('section.show', ['project_id'=> $project->project_id,'route_id'=> $route_id, 'project_type'=>'inland', 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id])}}">{{$section->section_name}}</a>
                             </li>
                             <li class="breadcrumb-item" aria-current="page">
-
-                                @if (isset($sub_section_id))
-                                    @php
-                                        $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-                                    @endphp
-
-                                    <a class="text-decoration-none" href="{{route('sub_section.show', ['project_id'=> $project->project_id, 'project_type'=>'inland', 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id, 'sub_section_id'=>$sub_section->sub_section_id])}}">{{$sub_section->sub_section_name}}</a>
-                                @else
-                                    {{$section->section_name}}
-                                @endif
+                                <a class="text-decoration-none" href="{{route('sub_section.show', ['project_id'=> $project->project_id,'route_id'=> $route_id, 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id,'customer_id'=>$customer_id,'type_id'=>$type_id, 'sub_section_id'=>$sub_section->sub_section_id])}}">{{$sub_section->sub_section_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
                                 Manage Core
@@ -134,9 +146,6 @@
 
     @switch(auth()->user()->role)
         @case('engineering')
-            @php
-                $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-            @endphp
             <div class="card">
                 <div class="card-body">
                     <div class="card">
@@ -144,11 +153,13 @@
                             <form action="{{ route('core.update') }}" method="POST" enctype=multipart/form-data>
                                 {{ csrf_field() }}
                                 <input type="hidden" name="project_id" value="{{$project->project_id}}" >
+                                <input type="hidden" name="route_id" value="{{$route_id}}" >
                                 <input type="hidden" name="segment_id" value="{{$segment->segment_id}}" >
                                 <input type="hidden" name="section_id" value="{{$section->section_id}}" >
-                                <input type="hidden" name="cable_category" value="{{$section->cable_category}}" >
-                                <input type="hidden" name="section_type" value="{{$section->section_type}}" >
-                                <input type="hidden" name="sub_section_id" value="{{$sub_section->sub_section_id}}" >
+                                <input type="hidden" name="customer_id" value="{{$customer_id}}" >
+                                <input type="hidden" name="type_id" value="{{$type_id}}" >
+                                <input type="hidden" name="sub_section_id" value="{{$sub_section_id}}" >
+                                
                                 <div class="table-responsive">
                                     <table class="table table-bordered text-nowrap mb-0 align-middle" style="margin-top:1rem;">
                                         <thead class="text-dark fs-4">
@@ -212,9 +223,6 @@
             </div>
             @break
         @case('ms')
-            @php
-                $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-            @endphp
             <div class="card">
                 <div class="card-body">
                     <div class="card">
@@ -222,11 +230,12 @@
                             <form action="{{ route('core.update') }}" method="POST" enctype=multipart/form-data>
                                 {{ csrf_field() }}
                                 <input type="hidden" name="project_id" value="{{$project->project_id}}" >
+                                <input type="hidden" name="route_id" value="{{$route_id}}" >
                                 <input type="hidden" name="segment_id" value="{{$segment->segment_id}}" >
                                 <input type="hidden" name="section_id" value="{{$section->section_id}}" >
-                                <input type="hidden" name="cable_category" value="{{$section->cable_category}}" >
-                                <input type="hidden" name="section_type" value="{{$section->section_type}}" >
-                                <input type="hidden" name="sub_section_id" value="{{$sub_section->sub_section_id}}" >
+                                <input type="hidden" name="customer_id" value="{{$customer_id}}" >
+                                <input type="hidden" name="type_id" value="{{$type_id}}" >
+                                <input type="hidden" name="sub_section_id" value="{{$sub_section_id}}" >
                                 <div class="table-responsive">
                                     <table class="table table-bordered text-nowrap mb-0 align-middle" style="margin-top:1rem;">
                                         <thead class="text-dark fs-4">
@@ -247,16 +256,13 @@
                                                         <h6 style="display:inline-block; color:white" class="fw-semibold mb-0">Loss DB KM</h6>
                                                     </th>
                                                     <th class="text-center">
-                                                        <h6 style="display:inline-block; color:white" class="fw-semibold mb-0">BOOKED</h6>
-                                                    </th>
-                                                    <th class="text-center">
                                                         <h6 style="display:inline-block; color:white" class="fw-semibold mb-0">Status</h6>
                                                     </th>
                                                 </tr>
                                         </thead>
                                         <tbody>
                                             @php
-                                                $cores = DB::table('core')->where('sub_section_id', $sub_section_id)->get();
+                                                $cores = DB::table('core')->where('sub_section_id', $sub_section_id)->orderBy(DB::raw('CAST(core AS UNSIGNED)'), 'asc')->get();
                                             @endphp
                                             
                                             @if (count($cores) > 0)
@@ -268,12 +274,6 @@
                                                         <td class="text-center" style="min-width: 10rem;"> <input type="number" step="0.0001" min="0" name="actual_end_cable[]" value="{{$core->actual_end_cable}}" class="form-control"> </td>
                                                         <td class="text-center" style="min-width: 10rem;"> <input type="number" step="0.0001" min="0" name="actual_total_loss_db[]" value="{{$core->actual_total_loss_db}}" class="form-control"> </td>
                                                         <td class="text-center" style="min-width: 10rem;"> <input type="number" step="0.0001" min="0" name="actual_loss_db_km[]" value="{{$core->actual_loss_db_km}}" class="form-control"> </td>
-                                                        <td class="text-center" style="min-width: 10rem;"> 
-                                                            <select class="form-select" name="actual_booked[]">
-                                                                <option value="NO" {{ ($core->actual_booked == "NO" || empty($core->actual_booked)) ? 'selected' : '' }}>NO</option>
-                                                                <option value="YES" {{ $core->actual_booked == "YES" ? 'selected' : '' }}>YES</option>
-                                                            </select>
-                                                        </td>
                                                         <td style="min-width: 10rem;" class="text-center bg-light">  {{$core->actual_remarks}} </td>
                                                     </tr>  
                                                 @endforeach

@@ -36,7 +36,7 @@
     <div class="col-lg-12 align-items-stretch">
         <div class="card w-100 p-4">
             <div style="display:grid; grid-template-columns:2fr 1fr;">
-                <h4 style="text-align:left;" class=" fw-semibold mb-4">Core {{$core->core}} | {{$section->section_name}}</h4>
+                <h4 style="text-align:left;" class=" fw-semibold mb-4">Core {{$core->core}} | {{$sub_section->sub_section_name}} ( {{ DB::table('customer')->where('customer_id', $sub_section->customer_id)->get()->first()->customer_name}} )</h4>
                 
             </div>
             <div class="row">

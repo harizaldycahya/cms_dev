@@ -3,10 +3,29 @@
 
 @php
     $project = DB::table('project')->where('project_id', $project_id)->get()->first();
-    $segment = DB::table('segment')->where('segment_id', $segment_id)->get()->first();
-    $section = DB::table('section')->where('section_id', $section_id)->get()->first();
-    if(isset($sub_section)){
-        $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
+    $segment = DB::table('segment')->where('route_id', $route_id)->where('segment_id', $segment_id)->get()->first();
+    $section = DB::table('section')->where('route_id', $route_id)->where('segment_id', $segment_id)->where('section_id', $section_id)->get()->first();
+    
+    if(isset($sub_section_id)){
+        $sub_section = DB::table('sub_section')->where('route_id', $route_id)->where('segment_id', $segment_id)->where('section_id', $section_id)->where('sub_section_id', $sub_section_id)->get()->first();
+    }
+
+    switch ($route_id) {
+        case '1':
+            $route_name = 'SUBMARINE';
+            break;
+        case '2':
+            $route_name = 'INLAND';
+            break;
+        case '3':
+            $route_name = 'LASTMILE';
+            break;
+        case '-':
+            $route_name = 'INLAND';
+            break;
+        default:
+            $route_name = 'UNDIFINED';
+            break;
     }
 @endphp
 
@@ -83,39 +102,37 @@
 @endsection
 
 @section('breadcrumb')
-    <div class="card bg-light-info shadow-none position-relative overflow-hidden">
-        <div class="card-body px-4 py-5">
+    <div class="card bg-dark text-white shadow-lg position-relative overflow-hidden">
+        <div class="card-body px-5 py-5">
             <div class="row align-items-center">
                 <div class="col-9">
                     @if (isset($sub_section_id))
-                        @php
-                            $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-                        @endphp
-                        <h3 class="fw-semibold" style="font-size: 2rem;"> Upload excel : {{$sub_section->sub_section_name}}</h3>
+                        <h3 class="fw-semibold text-white" style="font-size: 1.5rem; text-transform: uppercase;"> #{{$sub_section->sub_section_id}} SECTION {{ ucwords(strtolower($sub_section->sub_section_name)) }} ({{$route_name}})</h3>
+                        <h3 class="fw-semibold text-white" style="font-size: 1.8rem;"> UPLOAD EXCEL </h3>
                     @else
-                        <h3 class="fw-semibold" style="font-size: 2rem;"> Upload excel : {{$section->section_name}}</h3>
+                    <h3 class="fw-semibold text-white" style="font-size: 1.5rem; text-transform: uppercase;"> #{{$section->section_id}} SECTION {{ ucwords(strtolower($section->section_name)) }} ({{$route_name}})</h3>
+                        <h3 class="fw-semibold text-white" style="font-size: 1.8rem;">  UPLOAD EXCEL </h3>
                     @endif
-                    <hr>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item">
                                 <a class="text-decoration-none" href="/">Dashboard</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project->project_id, 'project_type'=>'inland'])}}">{{$project->project_name}}</a>
+                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project->project_id,'route_id'=> '-'])}}">{{$project->project_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('segment.show', ['project_id'=> $project->project_id, 'project_type'=>'inland', 'segment_id'=>$segment->segment_id])}}">{{$segment->segment_name}}</a>
+                                <a class="text-decoration-none" href="{{route('segment.show', ['project_id'=> $project->project_id,'route_id'=> $route_id, 'segment_id'=>$segment->segment_id])}}">{{$segment->segment_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('section.show', ['project_id'=> $project->project_id, 'project_type'=>'inland', 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id])}}">{{$section->section_name}}</a>
+                                <a class="text-decoration-none" href="{{route('section.show', ['project_id'=> $project->project_id,'route_id'=> $route_id, 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id])}}">{{$section->section_name}}</a>
                             </li>
                             @if (isset($sub_section_id))
                                 @php
                                     $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
                                 @endphp
                                 <li class="breadcrumb-item" aria-current="page">
-                                    <a class="text-decoration-none" href="{{route('sub_section.show', ['project_id'=> $project->project_id, 'project_type'=>'inland', 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id, 'sub_section_id'=>$sub_section->sub_section_id])}}">
+                                    <a class="text-decoration-none" href="{{route('sub_section.show', ['project_id'=> $project->project_id,'route_id'=> $route_id, 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id, 'sub_section_id'=>$sub_section->sub_section_id])}}">
                                         {{ $sub_section->sub_section_name}}
                                     </a>
                                 </li>
@@ -136,13 +153,9 @@
     <form id="uploadForm" onsubmit="return confirmSubmission()" action="{{ route('core.store_upload_excel') }}" method="POST" enctype="multipart/form-data">
         {{ csrf_field() }}
         <input hidden type="text" name="project_id" value="{{$project_id}}">
+        <input hidden type="text" name="route_id" value="{{$route_id}}">
         <input hidden type="text" name="segment_id" value="{{$segment_id}}">
         <input hidden type="text" name="section_id" value="{{$section_id}}">
-        <input hidden type="text" name="section_id" value="{{$section_id}}">
-        @if(isset($sub_section_id))
-            <input hidden type="text" name="sub_section_id" value="{{$sub_section_id}}">
-        @endif
-        
         <div class="col-12">
             <div class="card w-100 position-relative overflow-hidden mb-0">
                 <div class="card-body p-4">

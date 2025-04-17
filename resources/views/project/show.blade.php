@@ -54,16 +54,13 @@
     </style>
 @endsection
 
-@section('header')
-
-@endsection
-
 @section('breadcrumb')
     <div class="card bg-dark text-white shadow-lg position-relative overflow-hidden">
         <div class="card-body px-5 py-5">
             <div class="row align-items-center">
                 <div class="col-9">
-                    <h3 class="fw-semibold text-white" style="font-size: 2rem;">Project : {{$project->project_name}}</h3>
+                    <h3 class="fw-semibold text-white" style="font-size: 1.5rem;"> #{{$project->project_id}} PROJECT </h3>
+                    <h3 class="fw-semibold text-white" style="font-size: 1.8rem;">  {{$project->project_name}} ( {{$project->project_description}} )</h3>
                     <nav aria-label="breadcrumb" class="mt-3">
                         <ol class="breadcrumb" style="font-size: 1rem;">
                             <li class="breadcrumb-item">
@@ -80,8 +77,35 @@
     </div>
 @endsection
 
-
 @section('content')
+    @php
+        $number_of_segment = count(DB::table('segment')->where('project_id', $project->project_id)->groupBy('segment_id')->get());
+        
+        $route_id = request()->segment(4) == '-' ? '2' : request()->segment(4);
+
+        switch ($route_id) {
+            case '1':
+                $route_name = 'SUBMARINE';
+                break;
+            case '2':
+                $route_name = 'INLAND';
+                break;
+            case '3':
+                $route_name = 'LASTMILE';
+                break;
+            case '-':
+                $route_name = 'INLAND';
+                break;
+            
+            default:
+                $route_name = 'UNDIFINED';
+                break;
+        }
+
+        $segments = DB::table('segment')->where('project_id', $project->project_id)->where('route_id', $route_id)->orderByRaw('CAST(segment_id AS UNSIGNED)')->get();       
+        $all_segments = DB::table('segment')->where('project_id', $project->project_id)->orderByRaw('CAST(segment_id AS UNSIGNED)')->get();       
+        $check_section = DB::table('section')->where('project_id', $project->project_id)->where('route_id', $route_id)->get();
+    @endphp
     <div class="row">
         <div class="col-lg-12">
             <div class="card">
@@ -89,24 +113,24 @@
                     <div class="row align-items-start">
                         <div class="col-8">
                             <h5 class="card-title mb-9 fw-semibold"> Summary Cable Project</h5>
+                            <div class="fw-semibold mb-3">Project ID : {{$project->project_id}}</div>
                             <div class="fw-semibold mb-3">Cable Project Name : {{$project->project_name}} ({{$project->project_description}})</div>
-                            <div class="fw-semibold mb-3">Number Of Segment :  {{count($segments)}}</div>
-                            <div class="fw-semibold mb-3">Number Of Section : {{count(DB::table('section')->where('project_id', $project->project_id)->get())}}</div>
+                            <div class="fw-semibold mb-3">Number Of Segment :  {{$number_of_segment}}</div>
+                            <div class="fw-semibold mb-3">Number Of Section : NOT YET</div>
                             @php
                                 $section = DB::table('section')->where('project_id', $project->project_id)->first();
                             @endphp
-                            <div class="fw-semibold mb-3">Cable Type: {{ $section && $section->cable_type != null ? $section->cable_type : 'NO DATA' }}</div>
+                            <div class="fw-semibold mb-3">Cable Type: NOT YET</div>
                         </div>
                         <div class="col-4">
                             @if(auth()->user()->role == 'engineering')
                                 <div class="d-flex justify-content-end">
                                     <div style="text-align:right;" class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            Menu
+                                            MANAGE PROJECT
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a href="{{route('segment.create', $project->project_id)}}" display="block" class="dropdown-item">Add Segment</a>
-                                            <a href="{{route('project.edit', $project->project_id)}}" display="block" class="dropdown-item">Manage Project</a>
+                                            <a href="{{route('project.edit', $project->project_id)}}" display="block" class="dropdown-item">Edit Project</a>
                                             <a href="{{route('project.delete', $project->project_id)}}" onclick="return confirmDelete();" display="block" class="dropdown-item">Delete Project</a>
                                         </div>
                                     </div>
@@ -118,1572 +142,349 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-4">
-                <h5 class="card-title mb-9 fw-semibold" style=""> Segment List</h5>
-                <hr>
-                <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                    @php
-                        $segments = DB::table('segment')
-                        ->where('project_id', $project->project_id)
-                        ->orderByRaw('CAST(segment_id AS UNSIGNED) ASC')
-                        ->get();
-                    @endphp
-
-                    @foreach ($segments as $segment)
-                        <button style="display:inline; text-align:left;" class="nav-link {{ $loop->index == 0 ? 'active' : '' }}" id="v-pills-home-tab" data-bs-toggle="pill" data-bs-target="#{{$segment->segment_id}}" type="button" role="tab" >{{$segment->segment_name}}</button>
-                    @endforeach
-                </div>
-            </div>
-            <div class="col-lg-8">
-                <div class="card p-5">
-                    @php
-                        $segments = DB::table('segment')
-                        ->where('project_id', $project->project_id)
-                        ->orderByRaw('CAST(segment_id AS UNSIGNED) ASC')
-                        ->get();
-                    @endphp
-                    @foreach ($segments as $segment)
-                        <div class="tab-pane fade {{ $loop->index == 0 ? 'show active' : '' }}" id="{{$segment->segment_id}}" role="tabpanel">
-                            <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="first-tab" data-bs-toggle="pill" data-bs-target="#{{$segment->segment_id}}-first_route" type="button" role="tab" aria-controls="first" aria-selected="true">Main Route</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="second-tab" data-bs-toggle="pill" data-bs-target="#{{$segment->segment_id}}-second_route" type="button" role="tab" aria-controls="second" aria-selected="false">Diversity Route</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="third-tab" data-bs-toggle="pill" data-bs-target="#{{$segment->segment_id}}-third_route" type="button" role="tab" aria-controls="third" aria-selected="false">3rd Route</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="forth-tab" data-bs-toggle="pill" data-bs-target="#{{$segment->segment_id}}-forth_route" type="button" role="tab" aria-controls="forth" aria-selected="false">4th Route</button>
-                                </li>
-                            </ul>
-                            <div class="tab-content" id="pills-tabContent">
-                                <div class="tab-pane fade show active" id="{{$segment->segment_id}}-first_route" role="tabpanel" >
-                                    <div class="card bg-light">
-                                        <div style="height:6rem;"></div>
-                                        @php
-                                            // Fetch data from the database
-                                            $sections = DB::table('section')
-                                                ->where('segment_id', $segment->segment_id)
-                                                ->where('section_route', '1_route')
-                                                ->get();
-                                        @endphp
-                                            
-                                        @if(count($sections) > 0)
-                                            @foreach ($sections as $section)
-                                                @if($section->section_type == 'regular')
-                                                    <div style="display:flex; height:80px; justify-content:center;">
-                                                        <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                            <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$section->near_end}}</p>
-                                                        </div>
-                                                        <div style="width:480px; height:30px; display:flex;">
-                                                            @php
-                                                                $actual_core_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'OK')->get());
-                                                                $actual_core_not_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                $actual_core_aktif = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                $actual_core_capacity = $section->core_capacity;
-                                                                if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                    $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                }else{
-                                                                    $actual_availability = "";
-                                                                }
-                
-                
-                                                                $initial_core_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'OK')->get());
-                                                                $initial_core_not_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                $initial_core_aktif = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                $initial_core_capacity = $section->core_capacity;
-                                                                if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                    $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                }else{
-                                                                    $initial_availability = "";
-                                                                }
-                                                            
-                                                            @endphp
-                                                            <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id])}}">
-                                                                <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                    <div class="card-body">
-                                                                        <div class="row align-items-start">
-                                                                            <div class="row">
-                                                                                <table class="table table-bordered" style="width:100%;">
-                                                                                    <thead>
-                                                                                        <tr>
-                                                                                            <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                {{$section->section_name}}
-                                                                                            </th>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                            <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                        </tr>
-                                                                                    </thead>
-                                                                                    <tbody>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                            <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                            <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                            <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                            <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;"></td>
-                                                                                            <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;"></td>
-                                                                                            <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                        </tr>
-                                                                                    </tbody>
-                                                                                </table>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </a>
-                                                        </div>
-                                                        <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                            <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$section->far_end}}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div style="height:10px;"></div>
-                                                @endif
-                
-                                                @if($section->section_type == 'with_sub_section')
-                                                    @php
-                                                        $sub_sections = 
-                                                        DB::table('sub_section')
-                                                        ->where('section_id', $section->section_id)
-                                                        ->where('sub_owner', 'trias')
-                                                        ->groupBy('ropa_id')
-                                                        ->get();
-                                                    @endphp
-                                                    
-                                                    @foreach ($sub_sections as $sub_section)
-                                                        @if($sub_section->ropa_id != null)
-                                                            @php
-                                                                $ropa_sub_section = DB::table('sub_section')->where('ropa_id', $sub_section->ropa_id)->get();
-                                                            @endphp
-                                                            <div style="display:flex; height:80px; justify-content:center;">
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[0]->sub_near_end}}</p>
-                                                                </div>
-                                                                <div style="width:225px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $ropa_sub_section[0]->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$ropa_sub_section[0]->sub_near_end}} - {{$ropa_sub_section[0]->sub_far_end}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[0]->sub_far_end}}</p>
-                                                                </div>
-                                                                <div style="width:225px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $ropa_sub_section[1]->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$ropa_sub_section[1]->sub_near_end}} - {{$ropa_sub_section[1]->sub_far_end}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[1]->sub_far_end}}</p>
-                                                                </div>
-                                                            </div>
-                                                        @else
-                                                            <div style="display:flex; height:80px; justify-content:center;">
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$sub_section->sub_near_end}}</p>
-                                                                </div>
-                                                                <div style="width:480px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$sub_section->sub_section_name}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$sub_section->sub_far_end}}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div style="height:10px;"></div>
-                                                        @endif
-                                                    @endforeach
-                                                @endif
-                                            @endforeach
-                                        @else
-                                            <h5 style="font-weight: bold; font-size:1rem;" class="text-danger">NO DATA</h5>
-                                        @endif
-                                    </div>                
-                                </div>
-                                <div class="tab-pane fade" id="{{$segment->segment_id}}-second_route" role="tabpanel" >
-                                    <div class="card bg-light">
-                                        <div style="height:6rem;"></div>
-                                        @php
-                                            // Fetch data from the database
-                                            $sections = DB::table('section')
-                                                ->where('segment_id', $segment->segment_id)
-                                                ->where('section_route', '2_route')
-                                                ->get();
-                                        @endphp
-            
-                                        @if(count($sections) > 0)
-                                            @foreach ($sections as $section)
-                                                @if($section->section_type == 'regular')
-                                                    <div style="display:flex; height:80px; justify-content:center;">
-                                                        <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                            <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$section->near_end}}</p>
-                                                        </div>
-                                                        <div style="width:480px; height:30px; display:flex;">
-                                                            @php
-                                                                $actual_core_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'OK')->get());
-                                                                $actual_core_not_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                $actual_core_aktif = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                $actual_core_capacity = $section->core_capacity;
-                                                                if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                    $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                }else{
-                                                                    $actual_availability = "";
-                                                                }
-                
-                
-                                                                $initial_core_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'OK')->get());
-                                                                $initial_core_not_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                $initial_core_aktif = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                $initial_core_capacity = $section->core_capacity;
-                                                                if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                    $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                }else{
-                                                                    $initial_availability = "";
-                                                                }
-                                                            
-                                                            @endphp
-                                                            <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id])}}">
-                                                                <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                    <div class="card-body">
-                                                                        <div class="row align-items-start">
-                                                                            <div class="row">
-                                                                                <table class="table table-bordered" style="width:100%;">
-                                                                                    <thead>
-                                                                                        <tr>
-                                                                                            <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                {{$section->section_name}}
-                                                                                            </th>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                            <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                        </tr>
-                                                                                    </thead>
-                                                                                    <tbody>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                            <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                            <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                            <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                            <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;"></td>
-                                                                                            <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;"></td>
-                                                                                            <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                        </tr>
-                                                                                    </tbody>
-                                                                                </table>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </a>
-                                                        </div>
-                                                        <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                            <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$section->far_end}}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div style="height:10px;"></div>
-                                                @endif
-                
-                                                @if($section->section_type == 'with_sub_section')
-                                                    @php
-                                                        $sub_sections = 
-                                                        DB::table('sub_section')
-                                                        ->where('section_id', $section->section_id)
-                                                        ->where('sub_owner', 'trias')
-                                                        ->groupBy('ropa_id')
-                                                        ->get();
-                                                    @endphp
-                                                    
-                                                    @foreach ($sub_sections as $sub_section)
-                                                        @if($sub_section->ropa_id != null)
-                                                            @php
-                                                                $ropa_sub_section = DB::table('sub_section')->where('ropa_id', $sub_section->ropa_id)->get();
-                                                            @endphp
-                                                            <div style="display:flex; height:80px; justify-content:center;">
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[0]->sub_near_end}}</p>
-                                                                </div>
-                                                                <div style="width:225px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $ropa_sub_section[0]->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$ropa_sub_section[0]->sub_near_end}} - {{$ropa_sub_section[0]->sub_far_end}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[0]->sub_far_end}}</p>
-                                                                </div>
-                                                                <div style="width:225px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $ropa_sub_section[1]->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$ropa_sub_section[1]->sub_near_end}} - {{$ropa_sub_section[1]->sub_far_end}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[1]->sub_far_end}}</p>
-                                                                </div>
-                                                            </div>
-                                                        @else
-                                                            <div style="display:flex; height:80px; justify-content:center;">
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$sub_section->sub_near_end}}</p>
-                                                                </div>
-                                                                <div style="width:480px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$sub_section->sub_section_name}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$sub_section->sub_far_end}}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div style="height:10px;"></div>
-                                                        @endif
-                                                    @endforeach
-                                                @endif
-                                            @endforeach
-                                        @else
-                                            <h5 style="font-weight: bold; font-size:1rem;" class="text-danger">NO DATA</h5>
-                                        @endif
-                                    </div>
-                                </div>
-                                <div class="tab-pane fade" id="{{$segment->segment_id}}-third_route" role="tabpanel">
-                                    <div class="card bg-light">
-                                        <div style="height:6rem;"></div>
-                                        @php
-                                            // Fetch data from the database
-                                            $sections = DB::table('section')
-                                                ->where('segment_id', $segment->segment_id)
-                                                ->where('section_route', '3_route')
-                                                ->get();
-                                        @endphp
-            
-                                        @if(count($sections) > 0)
-                                            @foreach ($sections as $section)
-                                                @if($section->section_type == 'regular')
-                                                    <div style="display:flex; height:80px; justify-content:center;">
-                                                        <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                            <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$section->near_end}}</p>
-                                                        </div>
-                                                        <div style="width:480px; height:30px; display:flex;">
-                                                            @php
-                                                                $actual_core_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'OK')->get());
-                                                                $actual_core_not_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                $actual_core_aktif = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                $actual_core_capacity = $section->core_capacity;
-                                                                if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                    $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                }else{
-                                                                    $actual_availability = "";
-                                                                }
-                
-                
-                                                                $initial_core_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'OK')->get());
-                                                                $initial_core_not_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                $initial_core_aktif = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                $initial_core_capacity = $section->core_capacity;
-                                                                if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                    $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                }else{
-                                                                    $initial_availability = "";
-                                                                }
-                                                            
-                                                            @endphp
-                                                            <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id])}}">
-                                                                <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                    <div class="card-body">
-                                                                        <div class="row align-items-start">
-                                                                            <div class="row">
-                                                                                <table class="table table-bordered" style="width:100%;">
-                                                                                    <thead>
-                                                                                        <tr>
-                                                                                            <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                {{$section->section_name}}
-                                                                                            </th>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                            <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                        </tr>
-                                                                                    </thead>
-                                                                                    <tbody>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                            <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                            <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                            <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                            <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;"></td>
-                                                                                            <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;"></td>
-                                                                                            <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                        </tr>
-                                                                                    </tbody>
-                                                                                </table>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </a>
-                                                        </div>
-                                                        <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                            <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$section->far_end}}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div style="height:10px;"></div>
-                                                @endif
-                
-                                                @if($section->section_type == 'with_sub_section')
-                                                    @php
-                                                        $sub_sections = 
-                                                        DB::table('sub_section')
-                                                        ->where('section_id', $section->section_id)
-                                                        ->where('sub_owner', 'trias')
-                                                        ->groupBy('ropa_id')
-                                                        ->get();
-                                                    @endphp
-                                                    
-                                                    @foreach ($sub_sections as $sub_section)
-                                                        @if($sub_section->ropa_id != null)
-                                                            @php
-                                                                $ropa_sub_section = DB::table('sub_section')->where('ropa_id', $sub_section->ropa_id)->get();
-                                                            @endphp
-                                                            <div style="display:flex; height:80px; justify-content:center;">
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[0]->sub_near_end}}</p>
-                                                                </div>
-                                                                <div style="width:225px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $ropa_sub_section[0]->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$ropa_sub_section[0]->sub_near_end}} - {{$ropa_sub_section[0]->sub_far_end}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[0]->sub_far_end}}</p>
-                                                                </div>
-                                                                <div style="width:225px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $ropa_sub_section[1]->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$ropa_sub_section[1]->sub_near_end}} - {{$ropa_sub_section[1]->sub_far_end}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[1]->sub_far_end}}</p>
-                                                                </div>
-                                                            </div>
-                                                        @else
-                                                            <div style="display:flex; height:80px; justify-content:center;">
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$sub_section->sub_near_end}}</p>
-                                                                </div>
-                                                                <div style="width:480px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$sub_section->sub_section_name}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$sub_section->sub_far_end}}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div style="height:10px;"></div>
-                                                        @endif
-                                                    @endforeach
-                                                @endif
-                                            @endforeach
-                                        @else
-                                            <h5 style="font-weight: bold; font-size:1rem;" class="text-danger">NO DATA</h5>
-                                        @endif
-                                    </div>
-                                </div>
-                                <div class="tab-pane fade" id="{{$segment->segment_id}}-forth_route" role="tabpanel">
-                                    <div class="card bg-light">
-                                        <div style="height:6rem;"></div>
-                                        @php
-                                            // Fetch data from the database
-                                            $sections = DB::table('section')
-                                                ->where('segment_id', $segment->segment_id)
-                                                ->where('section_route', '4_route')
-                                                ->get();
-                                        @endphp
-            
-                                        @if(count($sections) > 0)
-                                            @foreach ($sections as $section)
-                                                @if($section->section_type == 'regular')
-                                                    <div style="display:flex; height:80px; justify-content:center;">
-                                                        <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                            <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$section->near_end}}</p>
-                                                        </div>
-                                                        <div style="width:480px; height:30px; display:flex;">
-                                                            @php
-                                                                $actual_core_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'OK')->get());
-                                                                $actual_core_not_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                $actual_core_aktif = count(DB::table('core')->where('section_id', $section->section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                $actual_core_capacity = $section->core_capacity;
-                                                                if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                    $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                }else{
-                                                                    $actual_availability = "";
-                                                                }
-                
-                
-                                                                $initial_core_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'OK')->get());
-                                                                $initial_core_not_ok = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                $initial_core_aktif = count(DB::table('core')->where('section_id', $section->section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                $initial_core_capacity = $section->core_capacity;
-                                                                if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                    $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                }else{
-                                                                    $initial_availability = "";
-                                                                }
-                                                            
-                                                            @endphp
-                                                            <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id])}}">
-                                                                <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                    <div class="card-body">
-                                                                        <div class="row align-items-start">
-                                                                            <div class="row">
-                                                                                <table class="table table-bordered" style="width:100%;">
-                                                                                    <thead>
-                                                                                        <tr>
-                                                                                            <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                {{$section->section_name}}
-                                                                                            </th>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                            <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                        </tr>
-                                                                                    </thead>
-                                                                                    <tbody>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                            <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                            <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                            <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                            <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;"></td>
-                                                                                            <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                        </tr>
-                                                                                        <tr>
-                                                                                            <td style="font-size: .8rem;"></td>
-                                                                                            <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                        </tr>
-                                                                                    </tbody>
-                                                                                </table>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </a>
-                                                        </div>
-                                                        <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                            <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$section->far_end}}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div style="height:10px;"></div>
-                                                @endif
-                
-                                                @if($section->section_type == 'with_sub_section')
-                                                    @php
-                                                        $sub_sections = 
-                                                        DB::table('sub_section')
-                                                        ->where('section_id', $section->section_id)
-                                                        ->where('sub_owner', 'trias')
-                                                        ->groupBy('ropa_id')
-                                                        ->get();
-                                                    @endphp
-                                                    
-                                                    @foreach ($sub_sections as $sub_section)
-                                                        @if($sub_section->ropa_id != null)
-                                                            @php
-                                                                $ropa_sub_section = DB::table('sub_section')->where('ropa_id', $sub_section->ropa_id)->get();
-                                                            @endphp
-                                                            <div style="display:flex; height:80px; justify-content:center;">
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[0]->sub_near_end}}</p>
-                                                                </div>
-                                                                <div style="width:225px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[0]->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $ropa_sub_section[0]->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$ropa_sub_section[0]->sub_near_end}} - {{$ropa_sub_section[0]->sub_far_end}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[0]->sub_far_end}}</p>
-                                                                </div>
-                                                                <div style="width:225px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $ropa_sub_section[1]->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $ropa_sub_section[1]->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$ropa_sub_section[1]->sub_near_end}} - {{$ropa_sub_section[1]->sub_far_end}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$ropa_sub_section[1]->sub_far_end}}</p>
-                                                                </div>
-                                                            </div>
-                                                        @else
-                                                            <div style="display:flex; height:80px; justify-content:center;">
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$sub_section->sub_near_end}}</p>
-                                                                </div>
-                                                                <div style="width:480px; height:30px; display:flex;">
-                                                                    @php
-                                                                        $actual_core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'OK')->get());
-                                                                        $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'NOT OK')->get());
-                                                                        $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                                        $actual_core_capacity = $section->core_capacity;
-                                                                        if($actual_core_capacity - $actual_core_aktif != 0){
-                                                                            $actual_availability = ($actual_core_ok / ($actual_core_capacity - $actual_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $actual_availability = "";
-                                                                        }
-                
-                
-                                                                        $initial_core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'OK')->get());
-                                                                        $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'NOT OK')->get());
-                                                                        $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'AKTIF')->get());
-                                                                        $initial_core_capacity = $section->core_capacity;
-                                                                        if($initial_core_capacity - $initial_core_aktif != 0){
-                                                                            $initial_availability = ($initial_core_ok / ($initial_core_capacity - $initial_core_aktif)) * 100;
-                                                                        }else{
-                                                                            $initial_availability = "";
-                                                                        }
-                                                                    
-                                                                    @endphp
-                                                                    <a style=" position:relative; width:100%; height:10%; {{ $actual_availability < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('sub_section.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section->sub_section_id])}}">
-                                                                        <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
-                                                                            <div class="card-body">
-                                                                                <div class="row align-items-start">
-                                                                                    <div class="row">
-                                                                                        <table class="table table-bordered" style="width:100%;">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th colspan="2" style="font-size: 1rem; font-weight:bold;">
-                                                                                                        {{$sub_section->sub_section_name}}
-                                                                                                    </th>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Initial</th>
-                                                                                                    <th style="font-size: .8rem; font-weight:bold;">Actual</th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $initial_availability == null ? 0 : \Illuminate\Support\Str::limit($availability, 5, $end=' ') }}  %</td>
-                                                                                                    <td style="font-size: .8rem;">Availability : {{ $actual_availability == null ? 0 : \Illuminate\Support\Str::limit($actual_availability, 5, $end=' ') }}  %</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$initial_core_capacity}}</td>
-                                                                                                    <td style="font-size: .8rem;">Core Capacity : {{$actual_core_capacity}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">SOLD Core : {{$initial_core_aktif}}</td>
-                                                                                                    <td style="font-size: .8rem;">ACTIVE Core: {{$actual_core_aktif}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                                                    <td style="font-size: .8rem;">IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core OK : {{$actual_core_ok}}</td>
-                                                                                                </tr>
-                                                                                                <tr>
-                                                                                                    <td style="font-size: .8rem;"></td>
-                                                                                                    <td style="font-size: .8rem;" style="padding-left:2rem;">* Core NOT OK : {{$actual_core_not_ok}}</td>
-                                                                                                </tr>
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                                <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
-                                                                    <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$sub_section->sub_far_end}}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div style="height:10px;"></div>
-                                                        @endif
-                                                    @endforeach
-                                                @endif
-                                            @endforeach
-                                        @else
-                                            <h5 style="font-weight: bold; font-size:1rem;" class="text-danger">NO DATA</h5>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>  
-            </div>
-            
         </div>
     </div>
 
     <div class="row">
-        <div class="col-lg-12 align-items-stretch">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title fw-semibold mb-4">Segment List</h5>
-                    <div class="table-responsive">
-                        <table id="example" class="table table-bordered text-nowrap mb-0 align-middle" style="margin-top:1rem;">
-                            <thead class="bg-dark fs-4">
-                                <tr>
-                                    <th class="">
-                                        <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0">NO</h6>
-                                    </th>
-                                    <th class="">
-                                        <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0">Segment Name</h6>
-                                    </th>
-                                    <th class="text-center" >
-                                        <h6 style="color:white;" class="fw-semibold mb-0">Action</h6>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($segments as $segment)
-                                    @php
-                                        $number_of_requests = count(DB::table('draf_sor')->where('segment_id', $segment->segment_id)->where('status', 'PROCESS')->get());   
-                                    @endphp
-                                    <tr>
-                                        <td style="width:10%; text-align: center;">{{$loop->index + 1}}</td>
-                                        <td style="width:70%;" class="px-5">
-                                            <a type="button" class=" btn-notification" style="cursor: default; color:black;">
-                                                {{$segment->segment_name}} &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; 
-                                                
-                                                @if(auth()->user()->role == 'ms')
-                                                    @if($number_of_requests > 0)
-                                                        <span class="badge bg-danger">{{$number_of_requests}}</span>
-                                                    @endif
-                                                @endif
-                                            </a>
-                                        </td>
-                                        <td class="text-center" style="width:20%; text-align: center;">
-                                            <a href="{{route('segment.show', ['project_id'=>$project->project_id, 'segment_id'=>$segment->segment_id])}}" class="btn btn-primary m-1" type="button">
-                                                Detail
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach                                                
-                            </tbody>
-                        </table>
+        <div class="col-lg-12">
+            <div class="card bg-light">
+                <div style="height:6rem;"></div>
+                @if(count($all_segments) > 0)
+                    @foreach ($all_segments as $segment_item)
+                        @php
+                            $project_id = $project->project_id;
+                            $segment_id = $segment_item->segment_id;
+                            $segment_name = $segment_item->segment_name;
+                            list($near_end, $far_end) = explode(" - ", $segment_name);
+                            $project = DB::table('project')->where('project_id', $project->project_id)->get()->first();
+                        
+                            switch($segment_item->route_id){
+                                case '1':
+                                    $route_name = 'SUBMARINE';
+                                    break;
+                                case '2':
+                                    $route_name = 'INLAND';
+                                    break;
+                                case '3':
+                                    $route_name = 'LASTMILE';
+                                    break;
+                            }
+                        
+                            $route_id = $segment_item->route_id;
+                        
+                            $check_section = DB::table('section')->where('project_id', $project->project_id)->where('route_id', $route_id)->where('segment_id', $segment_item->segment_id)->get();
+                            $get_sections = DB::table('section')->where('project_id', $project->project_id)->where('route_id', $route_id)->where('segment_id', $segment_item->segment_id)->get();
+                            
+                            $segment_availability_core_idle = 0;
+                            $segment_availability_core_capacity = 0;
+                            $lowest_section_id_idle = null;
+                            
+                        
+                            foreach ($get_sections as $item_section) {
+                                $main_core_capacity = $item_section->core_capacity;   
+                            
+                                // Fetch core data
+                                $cores = DB::table('core')
+                                    ->where('project_id', $project_id)
+                                    ->where('route_id', $route_id)
+                                    ->where('segment_id', $segment_id)
+                                    ->where('section_id', $item_section->section_id)
+                                    ->orderByRaw('CAST(core AS UNSIGNED) ASC')
+                                    ->get();
+                        
+                                $uniqueCores = collect($cores)
+                                ->groupBy(fn($core) => $core->core . '-' . $core->customer_id)
+                                ->map(function ($group) {
+                                    $allOk = $group->every(fn($core) => isset($core->actual_remarks) && strtoupper($core->actual_remarks) === 'OK'); // Ensure case sensitivity
+                                    $finalRemark = $allOk ? 'OK' : 'NOT OK';
+                                    return (object) [
+                                        'core' => $group->first()->core,
+                                        'customer_id' => $group->first()->customer_id,
+                                        'status' => $group->first()->status,
+                                        'actual_remarks' => $finalRemark,
+                                    ];
+                                })
+                                ->values(); // Reset array keys
+                        
+                                // Calculate core capacities
+                                $core_capacity = $uniqueCores->count();
+                                // $sold_core = $uniqueCores->where('status', 'SOLD')->count();
+                                $core_active = $uniqueCores->where('status', 'ACTIVE')->count();
+                                $core_mismatch = $uniqueCores->where('status', 'MISMATCH')->count();
+                                $core_booked = $uniqueCores->where('status', 'BOOKED')->count();
+                                $sold_core = $core_active + $core_mismatch + $core_booked;
+                                    
+                                // Booked OK and NOT OK based on remarks, not status
+                                $actual_core_booked_ok = $uniqueCores->where('status', 'BOOKED')->where('actual_remarks', 'OK')->count();
+                                $actual_core_booked_not_ok = $uniqueCores->where('status', 'BOOKED')->where('actual_remarks', 'NOT OK')->count();
+                        
+                                $core_used = $uniqueCores->where('status', 'USED')->count();
+                                $idle_core = $uniqueCores->where('status', 'IDLE')->count();
+                                $idle_general = $idle_core + $core_used;
+                                
+                                $actual_core_idle_ok = $uniqueCores->where('status', 'IDLE')->where('actual_remarks', 'OK')->count();
+                                $actual_core_idle_not_ok = $uniqueCores->where('status', 'IDLE')->where('actual_remarks', 'NOT OK')->count();
+                        
+                                $availability_core_idle = 0;
+                                $availability_core_capacity = 0;
+                        
+                                if(($core_capacity - $core_active) != 0){
+                                    $availability_core_idle = ($idle_general != 0) ? (($actual_core_idle_ok + $actual_core_booked_ok) / ( $idle_general + $core_booked)) * 100 : 0;
+                                    $availability_core_capacity = ($core_capacity !=0 ) ? (($actual_core_idle_ok + $actual_core_booked_ok) / $core_capacity) * 100 : 0;
+                                }else{
+                                    $availability_core_idle = 0;
+                                    $availability_core_capacity = 0;
+                                }
+                        
+                                if (($availability_core_idle != 0 && $availability_core_idle < $segment_availability_core_idle) || $segment_availability_core_idle == 0) {
+                                    $segment_availability_core_idle = $availability_core_idle;
+                                    $lowest_section_id_idle = $item_section->section_id;
+                                }
+                        
+                                if (($availability_core_capacity != 0 && $availability_core_capacity < $segment_availability_core_capacity) || $segment_availability_core_capacity == 0) {
+                                    $segment_availability_core_capacity = $availability_core_capacity;
+                                }
+                            }
+
+                            // start
+                                // Fetch core data
+                                $segment_cores = DB::table('core')
+                                    ->where('project_id', $project_id)
+                                    ->where('route_id', $route_id)
+                                    ->where('segment_id', $segment_id)
+                                    ->where('section_id', $lowest_section_id_idle)
+                                    ->orderByRaw('CAST(core AS UNSIGNED) ASC')
+                                    ->get();
+                            
+                                $segment_uniqueCores = collect($segment_cores)
+                                ->groupBy(fn($core) => $core->core . '-' . $core->customer_id)
+                                ->map(function ($group) {
+                                    $allOk = $group->every(fn($core) => isset($core->actual_remarks) && strtoupper($core->actual_remarks) === 'OK'); // Ensure case sensitivity
+                                    $finalRemark = $allOk ? 'OK' : 'NOT OK';
+                                    return (object) [
+                                        'core' => $group->first()->core,
+                                        'customer_id' => $group->first()->customer_id,
+                                        'status' => $group->first()->status,
+                                        'actual_remarks' => $finalRemark,
+                                    ];
+                                })
+                                ->values(); // Reset array keys
+                        
+                                // Calculate core capacities
+                                $segment_core_capacity = $segment_uniqueCores->count();
+                                // $sold_core = $segment_uniqueCores->where('status', 'SOLD')->count();
+                                $segment_core_active = $segment_uniqueCores->where('status', 'ACTIVE')->count();
+                                $segment_core_mismatch = $segment_uniqueCores->where('status', 'MISMATCH')->count();
+                                $segment_core_booked = $segment_uniqueCores->where('status', 'BOOKED')->count();
+                                $segment_sold_core = $segment_core_active + $segment_core_mismatch + $segment_core_booked;
+                                    
+                                // Booked OK and NOT OK based on remarks, not status
+                                $actual_segment_core_booked_ok = $segment_uniqueCores->where('status', 'BOOKED')->where('actual_remarks', 'OK')->count();
+                                $actual_segment_core_booked_not_ok = $segment_uniqueCores->where('status', 'BOOKED')->where('actual_remarks', 'NOT OK')->count();
+                        
+                                $segment_core_used = $segment_uniqueCores->where('status', 'USED')->count();
+                                $segment_idle_core = $segment_uniqueCores->where('status', 'IDLE')->count();
+                                $segment_idle_general = $segment_idle_core + $segment_core_used;
+                                
+                                $actual_segment_core_idle_ok = $segment_uniqueCores->where('status', 'IDLE')->where('actual_remarks', 'OK')->count();
+                                $actual_segment_core_idle_not_ok = $segment_uniqueCores->where('status', 'IDLE')->where('actual_remarks', 'NOT OK')->count();
+                        
+                            // end
+                        
+                        @endphp
+                        {{-- here --}}
+                        <div style="display:flex; height:80px; margin: 0rem 5rem; justify-content:left;">
+                            <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
+                                <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$near_end}}</p>
+                            </div>
+                            <div style="width:480px; height:30px; display:flex;">
+                                <a style=" position:relative; width:100%; height:10%; {{ $segment_availability_core_idle < 50 ? 'background:rgb(239 68 68)' : 'background:rgb(22 163 74)' }};" class="line my-auto" href="{{route('segment.show', ['project_id'=>$project->project_id, 'route_id'=>$segment_item->route_id, 'segment_id'=> $segment_item->segment_id])}}">
+                                    <div class="card hide" style=" position:absolute; bottom:2rem; left:2rem; min-width:40rem;">
+                                        <div class="card-body">
+                                            <div class="row align-items-start">
+                                                <div class="row">
+                                                    <table class="border-dark table table-bordered " style="width:100%; overflow-y:auto;">
+                                                        <thead class="text-dark" style="font-size:.8rem;">
+                                                            <tr>
+                                                                <th scope="col" colspan="2" style="text-transform: capitalize;"> Availability based on core idle : {{ \Illuminate\Support\Str::limit($segment_availability_core_idle, 5, '') }} %</th>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="col" colspan="2" style="text-transform: capitalize;"> Availability based on core capacity : {{ \Illuminate\Support\Str::limit($segment_availability_core_capacity, 5, '') }} %</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <thead class="bg-dark text-white" style="font-size:.8rem;">
+                                                            <tr>
+                                                                <th scope="col">Initial Details</th>
+                                                                <th scope="col">Actual Details</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody style="font-weight:bold">
+                                                            <tr>
+                                                                <td>Main Core Capacity : {{$segment_core_capacity}}</td>
+                                                                <td>Main Core Capacity : {{$main_core_capacity}}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Core Capacity : {{$core_capacity}}</td>
+                                                                <td>Core Capacity : {{$core_capacity}}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    SOLD Core : {{$sold_core}}
+                                                                </td>
+                                                                <td>
+                                                                    SOLD Core : {{$sold_core}}
+                                                                    <br>
+                                                                    <ul style="padding:1rem 2rem;">
+                                                                        <li style="list-style-type:square" > Active : {{$core_active}}</li>
+                                                                        <li style="list-style-type:square" > Mismatch : {{$core_mismatch}}</li>
+                                                                        <li style="list-style-type:square" > 
+                                                                            Booked :{{$core_booked}}
+                                                                            <br> 
+                                                                            <ul style="padding:0.2rem 2rem;">
+                                                                                <li style="list-style-type:circle" > OK : {{$actual_core_booked_ok}}</li>
+                                                                                <li style="list-style-type:circle" > NOT OK : {{$actual_core_booked_not_ok}}</li>
+                                                                            </ul>
+                                                                        </li>
+                                                                        
+                                                                    </ul>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>IDLE Core : {{$idle_general}}</td>
+                                                                <td>
+                                                                    IDLE Core : {{$idle_general}}
+                                                                    <br>
+                                                                    <ul style="padding:1rem 2rem;">
+                                                                        <li style="list-style-type:square" > Used : {{$core_used}}</li>
+                                                                        <li style="list-style-type:square" > 
+                                                                            IDLE :{{$idle_core}}
+                                                                            <br> 
+                                                                            <ul style="padding:0.2rem 2rem;">
+                                                                                <li style="list-style-type:circle" > OK : {{$actual_core_idle_ok}}</li>
+                                                                                <li style="list-style-type:circle" > NOT OK : {{$actual_core_idle_not_ok}}</li>
+                                                                            </ul>
+                                                                        </li>
+                                                                        
+                                                                    </ul>
+                                                                </td>
+                                                            </tr>
+                                                                
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div style="width:30px; height:30px; background:rgb(22 163 74); position:relative;">
+                                <p style="position:absolute; top: -2.5rem; font-size:.7rem; font-weight:bold; color:black; width:200px;" class="absolute -top-10 text-xs font-bold">{{$far_end}}</p>
+                            </div>
+                        </div>
+                        <div style="height:10px;"></div>
+                        {{-- here --}}
+                    @endforeach`
+                @else
+                    <h5 style="font-weight: bold; font-size:1rem;" class="text-danger">NO DATA</h5>
+                @endif
+            </div>    
+        </div>
+    </div>
+
+    
+    <div class="row card p-5">
+       
+        <div class="row">
+            <div class="col-8">
+                <ul class="nav nav-pills mb-3 px-auto">
+                    <div class="d-flex" style="margin-right: 1rem;">
+                        <div style="text-align:right;" class="dropdown">
+                            <a href="{{route('project.show', ['project_id'=>$project->project_id, 'route_id'=> '2'])}}" class="btn btn-{{$route_id == '2' ? 'primary' : 'light'}} px-5" type="button">
+                                INLAND
+                                <span style="font-size: 1.2rem; margin-left: 0.5rem;"><i class="ti ti-shovel"></i></span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="d-flex" style="margin-right: 1rem;">
+                        <div style="text-align:right;" class="dropdown">
+                            <a href="{{route('project.show', ['project_id'=>$project->project_id, 'route_id'=> '1'])}}" class="btn btn-{{$route_id == '1' ? 'primary' : 'light'}} px-5" type="button">
+                                SUBMARINE
+                                <span style="font-size: 1.2rem; margin-left: 0.5rem;"><i class="ti ti-submarine"></i></span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="d-flex" style="margin-right: 1rem;">
+                        <div style="text-align:right;" class="dropdown">
+                            <a href="{{route('project.show', ['project_id'=>$project->project_id, 'route_id'=> '3'])}}" class="btn btn-{{$route_id == '3' ? 'primary' : 'light'}} px-5" type="button">
+                                LASTMILE
+                                <span style="font-size: 1.2rem; margin-left: 0.5rem;"><i class="ti ti-truck"></i></span>
+                            </a>
+                        </div>
+                    </div>
+                </ul>
+            </div>
+            <div class="col-4">
+                @if(auth()->user()->role == 'engineering')
+                    <div class="d-flex justify-content-end">
+                        <div style="text-align:right;" class="dropdown">
+                            <button class="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >
+                                MANAGE SEGMENT {{$route_name}}
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a href="{{route('segment.create', ['project_id'=>$project->project_id, 'route_id'=> $route_id ])}}" display="block" class="dropdown-item">Create Segment</a>
+                                <a href="{{route('segment.edit', ['project_id'=>$project->project_id, 'route_id'=> $route_id ])}}" display="block" class="dropdown-item">Manage Segment</a>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+            
+        <div>
+            <div class="row">
+                <div class="col-lg-12 align-items-stretch">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-semibold mb-4" style="text-transform: capitalize">
+                                Segment List {{ ucwords(strtolower($route_name)) }}
+                            </h5>
+                            <div class="table-responsive">
+                                <table id="example" class="table table-bordered text-nowrap mb-0 align-middle" style="margin-top:1rem;">
+                                    <thead class="bg-dark fs-4">
+                                        <tr>
+                                            <th class="">
+                                                <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0">Segment ID</h6>
+                                            </th>
+                                            <th class="">
+                                                <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0">Segment Name</h6>
+                                            </th>
+                                            <th class="text-center" >
+                                                <h6 style="color:white;" class="fw-semibold mb-0">Action</h6>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($segments as $segment)
+                                            <tr>
+                                                <td style="width:10%;">{{$segment->segment_id}}</td>                                               
+                                                <td style="width:70%;">{{$segment->segment_name}}</td>                                               
+                                                <td style="width:30%; text-align: center;">
+                                                    <a class="btn btn-primary" href="{{ route('segment.show', ['project_id' => $project->project_id, 'route_id' => $route_id, 'segment_id' => $segment->segment_id]) }}">
+                                                        DETAIL
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    
 @endsection
 
 @section('script')

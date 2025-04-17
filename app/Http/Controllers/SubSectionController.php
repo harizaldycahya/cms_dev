@@ -7,18 +7,6 @@ use Illuminate\Support\Facades\DB;
 
 class SubSectionController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            // Block access if the user has the 'hashmicro' role
-            if (auth()->user()->role === 'hashmicro') {
-                abort(403, 'Unauthorized action.');
-            }
-
-            // Allow access for other roles
-            return $next($request);
-        });
-    }
     
 
     public function index($id)
@@ -26,215 +14,208 @@ class SubSectionController extends Controller
         
     }
 
-    public function show($project_id, $segment_id, $section_id, $sub_section_id)
+    public function show($project_id, $route_id, $segment_id, $section_id, $customer_id, $type_id, $sub_section_id)
     {
-        $project = DB::table('project')->where('project_id', $project_id)->first();
-        $segment = DB::table('segment')->where('segment_id', $segment_id)->first();
-        $section = DB::table('section')->where('section_id', $section_id)->first();
 
         return view('sub_section.show')
-        ->with('project', $project)
-        ->with('project_type')
-        ->with('segment', $segment)
-        ->with('section', $section)
+        ->with('project_id', $project_id)
+        ->with('route_id', $route_id)
+        ->with('segment_id', $segment_id)
+        ->with('section_id', $section_id)
+        ->with('customer_id', $customer_id)
+        ->with('type_id', $type_id)
         ->with('sub_section_id', $sub_section_id);
+        
     }
 
-    public function create($section_id)
+    public function create($project_id, $route_id, $segment_id, $section_id)
     {
-      return view('sub_section.create')->with('section_id', $section_id);
+      return view('sub_section.create')
+      ->with('project_id', $project_id)
+      ->with('route_id', $route_id)
+      ->with('segment_id', $segment_id)
+      ->with('section_id', $section_id);
     }
 
 
     public function store(Request $request)
     {
-
-        function generateRandomString($length = 10) {
-            $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            $charactersLength = strlen($characters);
-            $randomString = '';
-            for ($i = 0; $i < $length; $i++) {
-                $randomString .= $characters[random_int(0, $charactersLength - 1)];
-            }
-            return $randomString;
-        }
-
+        $project_id = $request->project_id;
+        $route_id = $request->route_id;
+        $segment_id = $request->segment_id;
         $section_id = $request->section_id;
-        
-        if (!is_null($request->ropa_sub_section_name)) {
-            $loop_ropa_sub_section = count($request->ropa_sub_section_name);
-            
-            for($x = 0; $x < $loop_ropa_sub_section; $x++){
-                $randomString = generateRandomString(20);
-                    DB::table('sub_section')->insert([
-                        'ropa_id' => $randomString,
-                        'section_id' => $section_id,
-                        'segment_id' => $request->segment_id,
-                        'project_id' => $request->project_id,
-                        'sub_section_name' => $request->ropa_sub_near_end[$x].' - '.$request->ropa_sub_ropa[$x],
-                        'sub_near_end' => $request->ropa_sub_near_end[$x],
-                        'sub_far_end' => $request->ropa_sub_ropa[$x],
-                        'sub_owner' => $request->ropa_sub_owner[$x],
-                        'sub_site_owner_near_end' => $request->ropa_sub_site_owner_near_end[$x],
-                        'sub_site_owner_far_end' => 'ROPA',
-                        'sub_initial_length' => $request->ropa_sub_near_end_initial_length[$x],
-                        'sub_initial_min_total_loss' => $request->ropa_sub_near_end_initial_min_total_loss[$x],
-                        'sub_initial_max_total_loss' => $request->ropa_sub_near_end_initial_max_total_loss[$x],
-                    ]);
 
-                    DB::table('sub_section')->insert([
-                        'ropa_id' => $randomString,
-                        'section_id' => $section_id,
-                        'segment_id' => $request->segment_id,
-                        'project_id' => $request->project_id,
-                        'sub_section_name' => $request->ropa_sub_ropa[$x].' - '.$request->ropa_sub_far_end[$x],
-                        'sub_near_end' => $request->ropa_sub_ropa[$x],
-                        'sub_far_end' => $request->ropa_sub_far_end[$x],
-                        'sub_owner' => $request->ropa_sub_owner[$x],
-                        'sub_site_owner_near_end' => 'ROPA',
-                        'sub_site_owner_far_end' => $request->ropa_sub_site_owner_far_end[$x],
-                        'sub_initial_length' => $request->ropa_sub_far_end_initial_length[$x],
-                        'sub_initial_min_total_loss' => $request->ropa_sub_far_end_initial_min_total_loss[$x],
-                        'sub_initial_max_total_loss' => $request->ropa_sub_far_end_initial_max_total_loss[$x],
-                    ]);
-            }
+        $loop_sub_section = count($request->sub_section_name);
+        for($x = 0; $x < $loop_sub_section; $x++){
+
+            $sub_section_name =  $request->sub_section_name[$x];
+            $parts = explode(' - ', $sub_section_name);
+            $sub_near_end = trim($parts[0]); 
+            $sub_far_end = trim($parts[1]); 
+
+            DB::table('sub_section')->insert([
+                'project_id' => $request->project_id,
+                'route_id' => $request->route_id,
+                'segment_id' => $request->segment_id,
+                'section_id' => $section_id,
+                'customer_id' => $request->customer_id[$x],
+                'type_id' => $request->type_id[$x],
+                'sub_section_name' => $request->sub_section_name[$x],
+                'sub_near_end' => $sub_near_end,
+                'sub_far_end' => $sub_far_end,
+                'sub_site_owner_near_end' => $request->sub_site_owner_near_end[$x],
+                'sub_site_owner_far_end' => $request->sub_site_owner_far_end[$x],
+                'sub_initial_length' => $request->sub_initial_length[$x],
+                'sub_initial_min_total_loss' => $request->sub_initial_min_total_loss[$x],
+                'sub_initial_max_total_loss' => $request->sub_initial_max_total_loss[$x],
+            ]);
         }
 
-
-        if (!is_null($request->sub_section_name)) {
-            $loop_sub_section = count($request->sub_section_name);
-            for($x = 0; $x < $loop_sub_section; $x++){
-
-                DB::table('sub_section')->insert([
-                    'section_id' => $section_id,
-                    'segment_id' => $request->segment_id,
-                    'project_id' => $request->project_id,
-                    'sub_section_name' => $request->sub_section_name[$x],
-                    'sub_near_end' => $request->sub_near_end[$x],
-                    'sub_far_end' => $request->sub_far_end[$x],
-                    'sub_owner' => $request->sub_owner[$x],
-                    'sub_site_owner_near_end' => $request->sub_site_owner_near_end[$x],
-                    'sub_site_owner_far_end' => $request->sub_site_owner_far_end[$x],
-                    'sub_initial_length' => $request->sub_initial_length[$x],
-                    'sub_initial_min_total_loss' => $request->sub_initial_min_total_loss[$x],
-                    'sub_initial_max_total_loss' => $request->sub_initial_max_total_loss[$x],
-                ]);
-            }
-        }
-
-        $project_id = DB::table('section')->where('section_id', $request->section_id)->first()->project_id;
-        $segment_id = DB::table('section')->where('section_id', $request->section_id)->first()->segment_id;
-
-        return redirect(route('section.show', ['project_id'=>$project_id, 'segment_id'=> $segment_id, 'section_id' => $section_id]))->with('success', 'Sub Section Created Successfully');
-
+        return redirect(route('section.show', ['project_id'=>$project_id, 'route_id'=>$route_id, 'segment_id'=> $segment_id, 'section_id' => $section_id]))->with('success', 'Sub Section Created Successfully');
     }
-
-    public function edit($project_id, $segment_id, $section_type, $section_id, $sub_section_id)
+    
+    public function edit($project_id, $route_id, $segment_id, $section_id)
     {
         return view('sub_section.edit')
         ->with('project_id', $project_id)
-        ->with('project_type')
+        ->with('route_id', $route_id)
         ->with('segment_id', $segment_id)
-        ->with('section_id', $section_id)
-        ->with('section_type', $section_type)
-        ->with('sub_section_id', $sub_section_id);
+        ->with('section_id', $section_id);
     }
 
     public function update(Request $request)
     {   
-
+        
         switch(auth()->user()->role){
             case 'engineering':
-                $update = DB::table('sub_section')
-                ->where('sub_section_id', $request->sub_section_id)
-                ->update([
-                    'sub_section_name' => $request->sub_section_name,
-                    'sub_near_end' => $request->sub_near_end,
-                    'sub_far_end' => $request->sub_far_end,
-                    'sub_owner' => $request->sub_owner,
-                    'sub_site_owner_near_end' => $request->sub_site_owner_near_end,
-                    'sub_site_owner_far_end' => $request->sub_site_owner_far_end,
-                    'sub_initial_length' => $request->sub_initial_length,
-                    'sub_initial_min_total_loss' => $request->sub_initial_min_total_loss,
-                    'sub_initial_max_total_loss' => $request->sub_initial_max_total_loss,
-                ]);
-                
-                $cores = DB::table('core')->where('sub_section_id', $request->sub_section_id)->get();
-                $sub_section = DB::table('sub_section')->where('sub_section_id', $request->sub_section_id)->first();
-                $initial_length =  $sub_section->sub_initial_length;
-                $initial_max_total_loss =  $sub_section->sub_initial_max_total_loss;
-                $initial_min_total_loss =  $sub_section->sub_initial_min_total_loss;
-                foreach($cores as $core){
-                    if($core->initial_customers == null || $core->initial_customers == ''){
-                        if($core->initial_end_cable >= $initial_length){
-                            if($core->initial_total_loss_db <= $initial_max_total_loss){
-                                $initial_remarks = 'OK';
-                            }else{
-                                $initial_remarks = 'NOT OK';
-                            }
-                        }else{
-                            $initial_remarks = 'NOT OK';
-                        }
-                    }else{
-                        $initial_remarks = 'AKTIF';
+
+                $jumlah_sub_section_id = count($request->sub_section_id);
+                $typeIdTracker = []; // To track duplicate type_ids within the request
+
+                for ($x = 0; $x < $jumlah_sub_section_id; $x++) {
+                    // Skip if type_id is null or empty
+                    if (empty($request->type_id[$x])) {
+                        continue;
                     }
-            
-                    DB::table('core')->where('sub_section_id', $request->sub_section_id)->where('core_id', $core->core_id)->update([
-                        'initial_remarks' => $initial_remarks,
-                    ]);
+
+                    $customer_name = DB::table('customer')->where('customer_id', $request->customer_id[$x])->get()->first()->customer_name;
+
+                    // Check for duplicates within the request
+                    $key = $request->customer_id[$x] . '-' . $request->type_id[$x]; // Combine customer_id and type_id
+                    if (isset($typeIdTracker[$key])) {
+                        return redirect()->back()->with('error', "Duplicate Type ID " . $request->type_id[$x] . " found in request for Customer ID " . $customer_name);
+                    }
+                    $typeIdTracker[$key] = true; // Store the combination to track duplicates
+
+                    // Check for duplicates in the database (excluding the current record being updated)
+                    $existingType = DB::table('sub_section')
+                        ->where('sub_section_id', $request->sub_section_id[$x])
+                        ->where('customer_id', $request->customer_id[$x])
+                        ->where('type_id', $request->type_id[$x])
+                        ->where('sub_section_id', '!=', $request->sub_section_id[$x]) // Ensure it's not the same record
+                        ->exists();
+
+                    if ($existingType) {
+                        return redirect()->back()->with('error', "Type ID " . $request->type_id[$x] . " already exists for Customer " . $customer_name);
+                    }
                 }
-            
-                if($update){
-                    return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'sub_section_id'=> $request->sub_section_id]))->with('success', 'Sub Section Updated Successfully');
-                }else{
-                    return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'sub_section_id'=> $request->sub_section_id]))->with('success', 'Sub Section Is Not Updated');
+
+                // Proceed with update if no duplicates are found
+                for ($i = 0; $i < $jumlah_sub_section_id; $i++) {
+                    $sub_section_name = $request->sub_section_name[$i];
+                    $parts = explode(' - ', $sub_section_name);
+                    $sub_near_end = trim($parts[0]); 
+                    $sub_far_end = trim($parts[1]);
+
+                    DB::table('sub_section')
+                        ->where('sub_section_id', $request->sub_section_id[$i])
+                        ->update([
+                            'sub_section_name' => $sub_section_name,
+                            'sub_near_end' => $sub_near_end,
+                            'sub_far_end' => $sub_far_end,
+                            'customer_id' => $request->customer_id[$i],
+                            'type_id' => $request->type_id[$i],
+                            'sub_site_owner_near_end' => $request->sub_site_owner_near_end[$i],
+                            'sub_site_owner_far_end' => $request->sub_site_owner_far_end[$i],
+                            'sub_initial_length' => $request->sub_initial_length[$i],
+                            'sub_initial_min_total_loss' => $request->sub_initial_min_total_loss[$i],
+                            'sub_initial_max_total_loss' => $request->sub_initial_max_total_loss[$i],
+                        ]);
+
+                    $cores = DB::table('core')->where('sub_section_id', $request->sub_section_id[$i])->get();
+                    $sub_section = DB::table('sub_section')->where('sub_section_id', $request->sub_section_id[$i])->first();
+
+                    if ($sub_section) {
+                        $initial_length = $sub_section->sub_initial_length;
+                        $initial_max_total_loss = $sub_section->sub_initial_max_total_loss;
+                        $initial_min_total_loss = $sub_section->sub_initial_min_total_loss;
+
+                        foreach ($cores as $core) {
+                            if($core->initial_end_cable == null || $core->initial_total_loss_db == null){
+                                $initial_remarks = 'NOT OK';
+                            }else{
+                                if ($core->initial_end_cable >= $initial_length) {
+                                    $initial_remarks = ($core->initial_total_loss_db <= $initial_max_total_loss) ? 'OK' : 'NOT OK';
+                                } else {
+                                    $initial_remarks = 'NOT OK';
+                                }
+                            }
+
+                            DB::table('core')
+                                ->where('sub_section_id', $request->sub_section_id[$i])
+                                ->where('core_id', $core->core_id)
+                                ->update([
+                                    'initial_remarks' => $initial_remarks,
+                                ]);
+                        }
+                    }
                 }
-                    
+                
+                
+                return redirect(route('section.show', ['project_id'=>$request->project_id,'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id]))->with('success', 'Sub Section Updated Successfully');
+                
             break;
-                    
+
             case 'ms':
 
-                    $sub_actual_min_total_loss = (0.2 * $request->sub_actual_length) + ( round($request->sub_actual_length / 2 ) * 0.1) + (2 * 0.5);
-                    $sub_actual_max_total_loss = number_format(( $sub_actual_min_total_loss * (14.29 / 100) ) + $sub_actual_min_total_loss, 2, '.', '');
-    
+                $jumlah_sub_section_id = count($request->sub_section_id);
+
+                for($i = 0; $i < $jumlah_sub_section_id; $i++){
+
                     $update = DB::table('sub_section')
-                    ->where('sub_section_id', $request->sub_section_id)
+                    ->where('sub_section_id', $request->sub_section_id[$i])
                     ->update([
-                        'sub_actual_length' => $request->sub_actual_length,
-                        'sub_actual_min_total_loss' => $sub_actual_min_total_loss,
-                        'sub_actual_max_total_loss' => $sub_actual_max_total_loss,
+                        'sub_actual_length' => $request->sub_actual_length[$i],
+                        'sub_actual_min_total_loss' => $request->sub_actual_min_total_loss[$i],
+                        'sub_actual_max_total_loss' => $request->sub_actual_max_total_loss[$i],
                     ]);
-                
-                    $cores = DB::table('core')->where('sub_section_id', $request->sub_section_id)->get();
-                    $sub_section = DB::table('sub_section')->where('sub_section_id', $request->sub_section_id)->first();
+
+                    $cores = DB::table('core')->where('sub_section_id', $request->sub_section_id[$i])->get();
+                    $sub_section = DB::table('sub_section')->where('sub_section_id', $request->sub_section_id[$i])->first();
                     $actual_length =  $sub_section->sub_actual_length;
                     $actual_max_total_loss =  $sub_section->sub_actual_max_total_loss;
                     $actual_min_total_loss =  $sub_section->sub_actual_min_total_loss;
+
                     foreach($cores as $core){
-                        if($core->actual_customers == null || $core->actual_customers == ''){
-                            if($core->actual_end_cable >= $actual_length){
-                                if($core->actual_total_loss_db <= $actual_max_total_loss){
-                                    $actual_remarks = 'OK';
-                                }else{
-                                    $actual_remarks = 'NOT OK';
-                                }
+                        if($core->actual_end_cable >= $actual_length){
+                            if($core->actual_total_loss_db <= $actual_max_total_loss){
+                                $actual_remarks = $actual_length == null ? 'NOT OK' : 'OK';
                             }else{
                                 $actual_remarks = 'NOT OK';
                             }
                         }else{
-                            $actual_remarks = 'AKTIF';
+                            $actual_remarks = 'NOT OK';
                         }
-                
-                        DB::table('core')->where('sub_section_id', $request->sub_section_id)->where('core_id', $core->core_id)->update([
+                        
+                        DB::table('core')->where('sub_section_id', $request->sub_section_id[$i])->where('core_id', $core->core_id)->update([
                             'actual_remarks' => $actual_remarks,
                         ]);
                     }
+
+                }
+
+                return redirect(route('section.show', ['project_id'=>$request->project_id,'route_id'=>$request->route_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id]))->with('success', 'Sub Section Updated Successfully');
                 
-                    if($update){
-                        return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'sub_section_id'=> $request->sub_section_id]))->with('success', 'Sub Section Updated Successfully');
-                    }else{
-                        return redirect(route('sub_section.show', ['project_id'=>$request->project_id, 'segment_id'=> $request->segment_id, 'section_id' => $request->section_id, 'sub_section_id'=> $request->sub_section_id]))->with('success', 'Sub Section Is Not Updated');
-                    }
                     
             break;
         }
@@ -242,16 +223,94 @@ class SubSectionController extends Controller
 
     }
 
-    public function delete($sub_section_id){
+    public function delete($project_id, $route_id, $segment_id, $section_id, $sub_section_id){
+        
         $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->first();
 
-        if($sub_section->ropa_id != null){
-            DB::table('sub_section')->where('ropa_id', $sub_section->ropa_id)->delete();
+        if($sub_section->type_id == null ){
+            // TIDAK BERCABANG
+
+            $check_trias_sub_section_id = DB::table('sub_section')
+            ->where('project_id', $project_id)
+            ->where('route_id', $route_id)
+            ->where('segment_id', $segment_id)
+            ->where('section_id', $section_id)
+            ->where('customer_id', '000')
+            ->get()
+            ->first();
+
+            if (!$check_trias_sub_section_id) {
+                return redirect()->back()->with('error', 'Please create sub section TRIASMITRA first, before deleting sub section !');
+            }else{
+                $trias_sub_section_id = $check_trias_sub_section_id->sub_section_id;
+                DB::table('core')
+                ->where('sub_section_id', $sub_section_id)
+                ->update([
+                    'customer_id' => '000', 
+                    'status' => 'IDLE', 
+                    'initial_customers' => null, 
+                    'actual_customers' => null,
+                    'sub_section_id' => $trias_sub_section_id,
+                ]);
+
+                DB::table('sub_section')
+                ->where('project_id', $project_id)
+                ->where('route_id', $route_id)
+                ->where('segment_id', $segment_id)
+                ->where('section_id', $section_id)
+                ->where('sub_section_id', $sub_section_id)
+                ->delete();
+            }
+
+            return redirect(route('section.show', ['project_id'=>$project_id, 'route_id'=>$route_id, 'segment_id'=> $segment_id, 'section_id' => $section_id]))->with('success', 'Sub Section Deleted Successfully');
+            
         }else{
-            DB::table('sub_section')->where('sub_section_id', $sub_section_id)->delete();
+            $check_trias_sub_section_id = DB::table('sub_section')
+            ->where('project_id', $project_id)
+            ->where('route_id', $route_id)
+            ->where('segment_id', $segment_id)
+            ->where('section_id', $section_id)
+            ->where('customer_id', '000')
+            ->get()
+            ->first();
+
+            if (!$check_trias_sub_section_id) {
+                return redirect()->back()->with('error', 'Please create sub section TRIASMITRA first, before deleting sub section !');
+            }else{
+
+                $trias_sub_section_id = $check_trias_sub_section_id->sub_section_id;
+                DB::table('core')
+                ->where('sub_section_id', $sub_section_id)
+                ->update([
+                    'customer_id' => '000', 
+                    'status' => 'IDLE', 
+                    'initial_customers' => null, 
+                    'actual_customers' => null,
+                    'sub_section_id' => $trias_sub_section_id,
+                ]);
+
+                DB::table('core')
+                ->where('project_id', $project_id)
+                ->where('route_id', $route_id)
+                ->where('segment_id', $segment_id)
+                ->where('section_id', $section_id)
+                ->where('customer_id', $sub_section->customer_id)
+                ->whereNotNull('type_id') // Correct way to check for NOT NULL
+                ->delete();
+
+                DB::table('sub_section')
+                ->where('project_id', $project_id)
+                ->where('route_id', $route_id)
+                ->where('segment_id', $segment_id)
+                ->where('section_id', $section_id)
+                ->where('customer_id', $sub_section->customer_id)
+                ->whereNotNull('type_id') // Correct way to check for NOT NULL
+                ->delete();
+
+                return redirect(route('section.show', ['project_id'=>$project_id, 'route_id'=>$route_id, 'segment_id'=> $segment_id, 'section_id' => $section_id]))->with('success', 'Sub Section Deleted Successfully');
+            }
         }
 
-        return redirect(route('section.show', ['project_id'=>$sub_section->project_id, 'segment_id'=> $sub_section->segment_id, 'section_id' => $sub_section->section_id]))->with('success', 'Sub Section Deleted Successfully');
     }
 
 }

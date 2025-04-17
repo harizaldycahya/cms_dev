@@ -3,12 +3,14 @@
 
 @php
     if(auth()->user()->role == 'lapangan'){
-        $requests_sor = DB::table('draf_sor')->where('requestor', auth()->user()->nik)->where('status', 'PROCESS')->orderBy('date', 'desc')->get();
+        $requests_sor = DB::table('sor_request')->where('requestor', auth()->user()->nik)->where('status', 'PROCESS')->orderBy('date', 'desc')->get();
     }
     if(auth()->user()->role == 'ms'){
-        $requests_sor = DB::table('draf_sor')->where('status', 'PROCESS')->orderBy('date', 'desc')->get();
+        $requests_sor = DB::table('sor_request')->where('status', 'PROCESS')->orderBy('date', 'desc')->get();
     }
+
 @endphp
+
 
 @section('head_script')
     <style>
@@ -101,88 +103,103 @@
             <thead class="bg-dark fs-4">
                     <tr>
                         <th>
-                            <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0 px-4">Date</h6>
+                            <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0 px-4">Date / Time</h6>
                         </th>
-                        <th class="text-center">
-                            <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Requestor NIK</h6>
+                        <th >
+                            <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Requestor</h6>
                         </th>
-                        <th class="text-center">
-                            <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Requestor Name</h6>
-                        </th>
-                        <th class="text-center">
+                        <th >
                             <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Project</h6>
                         </th>
-                        <th class="text-center">
+                        <th >
                             <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Segment</h6>
                         </th>
-                        <th class="text-center">
+                        <th >
                             <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Section</h6>
                         </th>
-                        <th class="text-center">
-                            <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Sub Section</h6>
-                        </th>
-                        <th class="text-center">
+                        <th >
                             <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Route</h6>
                         </th>
-                        <th class="text-center">
+                        <th >
+                            <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Customer & Sub Section</h6>
+                        </th>
+                        <th >
                             <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Status</h6>
                         </th>
-                        <th class="text-center">
+                        <th >
                             <h6 style="color:white; display:inline-block;" class="fw-semibold mb-0">Action</h6>
                         </th>
                     </tr>
-            </thead>
-            <tbody>
+                </thead>  
+            <tbody class="">
                 @if(count($requests_sor) > 0)
                     @foreach ($requests_sor as $request_sor)
                         @php
-                            $requestor_name = DB::table('users')->where('nik', $request_sor->requestor)->get()->first()->name;   
+                            $requestor_name = DB::table('users')->where('nik', $request_sor->requestor)->get()->first()->name;  
+                            switch($request_sor->route_id){
+                                case '1':
+                                    $route_name = 'SUBMARINE';
+                                    break;
+                                case '2':
+                                    $route_name = 'INLAND';
+                                    break;
+                                case '3':
+                                    $route_name = 'LASTMILE';
+                                    break;
+                            }
+                            $sub_section = DB::table('sub_section')->where('sub_section_id', $request_sor->sub_section_id)->get()->first();
+                            $customer_name = DB::table('customer')->where('customer_id', $sub_section->customer_id)->get()->first()->customer_name;
                         @endphp
                         <tr>
-                            <td class="text-center" style="width:10%;">{{$request_sor->date }}</td>
-                            <td class="text-center">{{$request_sor->requestor}}</td>
-                            <td class="text-center">{{$requestor_name}}</td>
-                            <td class="text-center">{{DB::table('project')->where('project_id', $request_sor->project_id)->get()->first()->project_name}}</td>
-                            <td class="text-center">{{DB::table('segment')->where('segment_id', $request_sor->segment_id)->get()->first()->segment_name}}</td>
-                            <td class="text-center">{{DB::table('section')->where('section_id', $request_sor->section_id)->get()->first()->section_name}}</td>
-                            <td class="text-center">
+                            <td style="width:10%;">{{$request_sor->date }}</td>
+                            <td >
+                                 
+                                <h6 class="fw-semibold mb-1">{{$requestor_name}}</h6>
+                                <p class="fs-2 mb-0 text-muted">
+                                    {{$request_sor->requestor}}
+                                </p>
+                            </td>
+                            <td  >
+                                 
+                                <h6 class="fw-semibold mb-1">{{DB::table('project')->where('project_id', $request_sor->project_id)->get()->first()->project_name}}</h6>
+                                <p class="fs-2 mb-0 text-muted">
+                                    {{$route_name}}
+                                </p>
+                            </td>
+                            <td >{{DB::table('segment')->where('project_id', $request_sor->project_id)->where('segment_id', $request_sor->segment_id)->get()->first()->segment_name}}</td>
+                            <td >{{DB::table('section')->where('project_id', $request_sor->project_id)->where('segment_id', $request_sor->segment_id)->where('route_id', $request_sor->route_id)->where('section_id', $request_sor->section_id)->get()->first()->section_name}}</td>
+                            <td >
                                 @php
-                                    if($request_sor->sub_section_id == null){
-                                        echo 'NO SUB SECTION';
-
-                                    }else{
-                                        $sub_section = DB::table('sub_section')->where('sub_section_id', $request_sor->sub_section_id)->get()->first();
-
-                                        echo $sub_section->sub_section_name.' <span class="text-uppercase"> ( '.$sub_section->sub_owner.' ) </span> ';
+                                    $section_route = DB::table('section')->where('project_id', $request_sor->project_id)->where('segment_id', $request_sor->segment_id)->where('route_id', $request_sor->route_id)->where('section_id', $request_sor->section_id)->get()->first()->section_route;
+                                    switch ($section_route) {
+                                        case '1_route':
+                                            echo 'Main';
+                                            break;
+                                        case '2_route':
+                                            echo 'Diversity';
+                                            break;
+                                        case '3_route':
+                                            echo '3rd Route';
+                                            break;
+                                        case '4_route':
+                                            echo '4th Route';
+                                            break;
+                                        
+                                        default:
+                                            echo 'Main';
+                                            break;
                                     }
-                                    
                                 @endphp
                             </td>
-                            <td class="text-center">
-                            @php
-                                $section_route = DB::table('section')->where('section_id', $request_sor->section_id)->get()->first()->section_route;
-                                switch ($section_route) {
-                                    case '1_route':
-                                        echo 'Main';
-                                        break;
-                                    case '2_route':
-                                        echo 'Diversity';
-                                        break;
-                                    case '3_route':
-                                        echo '3rd Route';
-                                        break;
-                                    case '4_route':
-                                        echo '4th Route';
-                                        break;
-                                    
-                                    default:
-                                        echo 'Main';
-                                        break;
-                                }
-                            @endphp
-                            
+                            <td >
+                                <h6 class="fw-semibold mb-1">{{$customer_name}}</h6>
+                                <p class="fs-2 mb-0 text-muted">
+                                    {{DB::table('sub_section')->where('sub_section_id', $request_sor->sub_section_id)->get()->first()->sub_section_name}}
+                                </p>
+                                
                             </td>
-                            <td class="text-center">
+                            
+                            <td >
                                 @switch($request_sor->status)
                                     @case('PROCESS')
                                         <div class="bg-info text-white px-1 py-1">{{$request_sor->status}}</div>
@@ -194,18 +211,17 @@
                                         <div class="bg-primary text-danger px-1 py-1">{{$request_sor->status}}</div>
                                         @break
                                     @default
-                                        
                                 @endswitch    
                                 
                             </td>
-                            <td class="text-center">
+                            <td >
                                 <a href="{{route('sor.show', ['request_id' => $request_sor->request_id])}}" class="btn btn-primary" >Detail</a>
                             </td>
                         </tr>              
                     @endforeach
                 @else
                     <tr>
-                        <td colspan="6" class="text-center" >Empty</td>
+                        <td colspan="9" class="text-center" >Empty</td>
                     </tr>
                 @endif
             </tbody>

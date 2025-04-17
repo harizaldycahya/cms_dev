@@ -1,5 +1,111 @@
 @extends('layouts.app')
 
+@php
+    
+    $project = DB::table('project')->where('project_id', $project_id)->get()->first();
+    $segment = DB::table('segment')->where('route_id', $route_id)->where('segment_id', $segment_id)->get()->first();
+    $section = DB::table('section')->where('route_id', $route_id)->where('segment_id', $segment_id)->where('section_id', $section_id)->get()->first();
+    
+    $cores = DB::table('core')
+    ->where('route_id', $route_id)
+    ->where('project_id', $project_id)
+    ->where('segment_id', $segment_id)
+    ->where('section_id', $section_id)
+    ->where('customer_id', $customer_id)
+    ->where('sub_section_id', $sub_section_id)
+    ->orderByRaw('CAST(core AS UNSIGNED) ASC')
+    ->get();
+    
+    if ($type_id == '-') {
+        $sub_section = DB::table('sub_section')
+        ->where('route_id', $route_id)
+        ->where('segment_id', $segment_id)
+        ->where('section_id', $section_id)
+        ->where('sub_section_id', $sub_section_id)
+        ->where('customer_id', $customer_id)
+        ->get()
+        ->first();
+    } else {
+        $sub_section = DB::table('sub_section')
+        ->where('route_id', $route_id)
+        ->where('segment_id', $segment_id)
+        ->where('section_id', $section_id)
+        ->where('sub_section_id', $sub_section_id)
+        ->where('customer_id', $customer_id)
+        ->where('type_id', $type_id)
+        ->get()
+        ->first();
+    }
+    
+    
+    switch ($route_id) {
+        case '1':
+            $route_name = 'SUBMARINE';
+            break;
+        case '2':
+            $route_name = 'INLAND';
+            break;
+        case '3':
+            $route_name = 'LASTMILE';
+            break;
+        case '-':
+            $route_name = 'INLAND';
+            break;
+        default:
+            $route_name = 'UNDIFINED';
+            break;
+    }
+
+    $main_core_capacity = $section->core_capacity;   
+
+    $idle_core = $cores->where('status', 'IDLE')->count();
+    $core_used = $cores->where('status', 'USED')->count();
+ 
+    $idle_general = $idle_core + $core_used;
+    $core_capacity = $cores->count();
+    $core_active = $cores->where('status', 'ACTIVE')->count();   
+    $core_mismatch = $cores->where('status', 'MISMATCH')->count();   
+    $core_booked = $cores->where('status', 'BOOKED')->count();   
+    $core_used = $cores->where('status', 'USED')->count();   
+
+    $initial_core_sold = $cores->whereNotNull('initial_customers')->where('initial_customers', '!=', '')->count();
+    $actual_core_sold = $cores->whereNotNull('actual_customers')->where('actual_customers', '!=', '')->count();
+
+    $actual_core_booked_ok = $cores->where('status', 'BOOKED')->where('actual_remarks', 'OK')->count();   
+    $actual_core_booked_not_ok = $cores->where('status', 'BOOKED')->where('actual_remarks', 'NOT OK')->count();   
+    
+    $actual_core_idle_ok = $cores->where('status', 'IDLE')->where('actual_remarks', 'OK')->count();   
+    $actual_core_idle_not_ok = $cores->where('status', 'IDLE')->where('actual_remarks', 'NOT OK')->count();   
+    $actual_core_used_ok = $cores->where('actual_remarks', 'OK')->where('status', 'USED')->count();   
+         
+    $sold_core = $core_active + $core_mismatch + $core_booked;
+    
+
+    if(($core_capacity - $core_active) != 0){
+        $availability_core_idle = ($idle_general != 0) ? (($actual_core_idle_ok + $actual_core_booked_ok) / ( $idle_general + $core_booked)) * 100 : 0;
+        $availability_core_capacity = ($core_capacity !=0 ) ? (($actual_core_idle_ok + $actual_core_booked_ok) / $core_capacity ) * 100 : 0;
+    }else{
+        $availability_core_idle = "0";
+        $availability_core_capacity = "0";
+    }
+
+    $x = $sub_section->sub_actual_max_total_loss; // Example value for $x
+    $b = 3.75 + $sub_section->sub_initial_min_total_loss; // Example value for $b
+    $c = $sub_section->sub_initial_max_total_loss; // Example value for $c
+
+    // Check conditions and set color accordingly
+    if ($x < $b) {
+        $color = '#28a745';
+    } elseif ($x >= $b && $x <= $c) {
+        $color = "#ffc107";
+    } else {
+        $color = "#dc3545";
+    }
+
+
+@endphp
+
+
 @section('head_script')
     <style>
         html,
@@ -101,33 +207,27 @@
 @endsection
 
 @section('breadcrumb')
-    @php
-        $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-    @endphp
     <div class="card bg-dark text-white shadow-lg position-relative overflow-hidden">
         <div class="card-body px-5 py-5">
             <div class="row align-items-center">
                 <div class="col-9">
-                    <h3 class="fw-semibold text-white" style="font-size: 2rem;">Sub Section : {{$sub_section->sub_section_name}} <span style="text-transform: uppercase;">({{$sub_section->sub_owner}})</span> </h3>
+                    <h3 class="fw-semibold text-white" style="font-size: 2rem;">Sub Section : {{$sub_section->sub_section_name}} <span style="text-transform: uppercase;">({{DB::table('customer')->where('customer_id', $sub_section->customer_id)->get()->first()->customer_name}} {{$sub_section->type_id}})</span> </h3>
                     <nav aria-label="breadcrumb" class="mt-3">
                         <ol class="breadcrumb" style="font-size: 1rem;">
                             <li class="breadcrumb-item">
                                 <a class="text-decoration-none" href="/">Dashboard</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project->project_id])}}">{{$project->project_name}}</a>
+                                <a class="text-decoration-none" href="{{route('project.show', ['project_id'=> $project->project_id, 'route_id'=> '-' ])}}">{{$project->project_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('segment.show', ['project_id'=> $project->project_id, 'segment_id'=>$segment->segment_id])}}">{{$segment->segment_name}}</a>
+                                <a class="text-decoration-none" href="{{route('segment.show', ['project_id'=> $project->project_id, 'route_id'=> $route_id , 'segment_id'=>$segment->segment_id])}}">{{$segment->segment_name}}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a class="text-decoration-none" href="{{route('section.show', ['project_id'=> $project->project_id, 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id])}}">{{$section->section_name}}</a>
+                                <a class="text-decoration-none" href="{{route('section.show', ['project_id'=> $project->project_id, 'route_id'=> $route_id , 'segment_id'=>$segment->segment_id, 'section_id'=>$section->section_id])}}">{{$section->section_name}}</a>
                             </li>
                             <li class="breadcrumb-item" aria-current="page">
-                                @php
-                                    $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-                                    echo $sub_section->sub_section_name;
-                                @endphp
+                                    {{$sub_section->sub_section_name}}
                             </li>
                         </ol>
                     </nav>
@@ -138,65 +238,35 @@
 @endsection
 
 @section('content')
-
-    @php
-        $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-        $number_of_requests = count(DB::table('draf_sor')->where('sub_section_id', $sub_section_id)->where('status', 'PROCESS')->get());
-    @endphp
-
     <div class="col-lg-12 align-items-stretch">
         <div class="card w-100 p-4">
             <div class="row">
                 <div class="col-2">
-                    <a href="{{route('sor.summary', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section_id])}}" type="button" class="w-100 btn btn-secondary">
+                    <a href="{{route('sor.summary', ['project_id'=>$project->project_id,'route_id'=>$segment->route_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section_id])}}" type="button" class="w-100 btn btn-secondary">
                         SOR Summary
                     </a>
                 </div>
-                <div class="col-3">
-                    @if(auth()->user()->role == 'ms')
-                        <a href="{{route('sor.index', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section_id])}}" type="button" class="w-100 btn btn-primary btn-notification">
-                            Update SOR Request &nbsp; &nbsp; &nbsp;
-                            @if($number_of_requests > 0)
-                                <span class="badge bg-danger">{{$number_of_requests}}</span>
-                            @endif
-                        </a>
-                    @endif
-                    
-                </div>
-                
-                <div class="col-3">
+                <div class="col-8">
                 </div>
                 <div class="col-2">
-                    <div style="text-align:right;">
-                        @if(auth()->user()->role == 'lapangan')
-                            <a href="{{route('sor.create', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_type' => $section->section_type, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section_id])}}" class="w-100 btn btn-secondary my-1" type="button">
-                                Upload SOR
-                            </a>
-                        @endif
-                    </div>
-                </div>
-                <div class="col-2">
-                    @if(auth()->user()->role == 'ms')
-                        <div style="text-align:right;" class="dropdown">
-                            <button class="w-100 btn btn-primary dropdown-toggle my-1" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Menu
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <a href="{{route('sub_section.edit', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_type' => $section->section_type, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section->sub_section_id] )}}" display="block" class="dropdown-item">Edit Sub Section</a>
-                            </div>
-                        </div>
-                    @endif
                     @if(auth()->user()->role == 'engineering')
                         <div style="text-align:right;" class="dropdown">
                             <button class="w-100 btn btn-primary dropdown-toggle my-1" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Menu
                             </button>
                             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <a href="{{route('core.upload_excel', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section->sub_section_id])}}" display="block" class="dropdown-item">Upload Excel</a>
-                                <a href="{{route('core.create', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_type' => $section->section_type, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section->sub_section_id, 'input_type' => 'setup' ] )}}" display="block" class="dropdown-item">Setup Core</a>
-                                <a href="{{route('sub_section.edit', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_type' => $section->section_type, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section->sub_section_id] )}}" display="block" class="dropdown-item">Edit Sub Section</a>
-                                <a onclick="return confirmDelete(event)" href="{{route('sub_section.delete', ['sub_section_id' => $sub_section->sub_section_id] )}}" display="block" class="dropdown-item">Delete Sub Section</a>
+                                {{-- <a href="{{route('core.upload_excel', ['project_id'=>$project_id,'route_id'=>$route_id, 'segment_id'=> $segment_id, 'section_id' => $section_id, 'customer_id'=>$customer_id, 'type_id'=>$type_id])}}" display="block" class="dropdown-item">Upload Excel</a> --}}
+                                <a href="{{route('core.create', ['project_id'=>$project_id,'route_id'=>$route_id, 'segment_id'=> $segment_id, 'section_id' => $section_id, 'customer_id'=>$customer_id, 'type_id'=>$type_id, 'sub_section_id'=>$sub_section_id, 'input_type' => 'setup' ] )}}" display="block" class="dropdown-item">Setup Core</a>
+                                {{-- <a href="{{route('sub_section.edit', ['project_id'=>$project_id,'route_id'=>$route_id, 'segment_id'=> $segment_id, 'section_id' => $section_id, 'customer_id'=>$customer_id, 'type_id'=>$type_id] )}}" display="block" class="dropdown-item">Edit Sub Section</a> --}}
+                                <a onclick="return confirmDelete(event)" href="{{route('sub_section.delete', ['project_id'=>$project_id,'route_id'=>$route_id, 'segment_id'=> $segment_id, 'section_id'=> $section_id, 'sub_section_id' => $sub_section_id] )}}" display="block" class="dropdown-item">Delete Sub Section</a>
                             </div>
+                        </div>
+                    @endif
+                    @if(auth()->user()->role == 'lapangan')
+                        <div style="text-align:right;">
+                            <a href="{{route('sor.create', ['project_id'=>$project_id, 'route_id'=>$route_id, 'segment_id'=> $segment_id, 'section_id' => $section_id, 'customer_id'=> $sub_section->customer_id, 'type_id'=> $type_id, 'sub_section_id'=> $sub_section->sub_section_id])}}" class="btn btn-secondary my-1">
+                                Upload SOR
+                            </a>
                         </div>
                     @endif
                 </div>
@@ -208,10 +278,9 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="row align-items-start">
-                                        <div style="color:black;" class="card-title mb-9 fw-semibold" data-toggle="tooltip" data-placement="top" title="testing"> Summary Sub Section</div>
+                                        <div style="color:black;" class="card-title mb-9 fw-semibold"> Summary Sub Section</div>
                                         <div style="min-height: 3rem;"></div>
-                                        <div class="col-4">
-                                            <div class="fw-semibold mb-3">Sub Section ID : ({{$sub_section->sub_section_id}})</div>
+                                        <div class="col-6">
                                             <div class="fw-semibold mb-3">Project Name : {{$project->project_description}} ({{$project->project_name}})</div>
                                             <div class="fw-semibold mb-3">Segment Name : {{$segment->segment_name}}</div>
                                             <div class="fw-semibold mb-3">Section Name : {{$section->section_name}}</div>
@@ -233,72 +302,54 @@
                                                 @default
                                                     
                                             @endswitch
-                                            <div class="fw-semibold mb-3">Cable Category : {{$section->cable_category}}</div>
-                                        </div>
-                                        <div class="col-4">
-                                            
+                                            <div class="fw-semibold mb-3">Cable Category : {{$route_name}}</div>
                                             <div class="fw-semibold mb-3">Cable Type : {{$section->cable_type}}</div>
                                             <div class="fw-semibold mb-3">First RFS : {{$section->first_rfs}}</div>
                                             <div class="fw-semibold mb-3">Site Owner Near End : {{$sub_section->sub_site_owner_near_end}}</div>
                                             <div class="fw-semibold mb-3">Site Owner Far End : {{$sub_section->sub_site_owner_far_end}}</div>
                                         </div>
-                                        <div class="col-4">
+                                        <!-- First Pie Chart -->
+                                        <div class="col-3">
                                             <div class="card overflow-hidden text-white" style="background: linear-gradient(0deg, rgba(246,39,127,1) 0%, rgba(255,76,76,1) 100%); ">
-                                                <div class="card-body" style="padding: 5rem 1rem;">
-                                                    @php
-                                                        $core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'OK')->where('actual_booked', 'NO')->get());
-                                                        $core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'NOT OK')->where('actual_booked', 'NO')->get());
-                                                        $core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'AKTIF')->get());
-                                                        $core_booked = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_booked', 'YES')->get());
-                                                        
-                                                        $core_capacity_sub_section = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->get());
-                                                        $core_capacity = $section->core_capacity;
-
-                                                        if($core_capacity_sub_section - $core_aktif != 0){
-                                                            $availability = ($core_ok / ($core_capacity_sub_section - ($core_aktif + $core_booked))) * 100;
-                                                        }else{
-                                                            $availability = "";
-                                                        }
-
-                                                        $x = $sub_section->sub_actual_max_total_loss; // Example value for $x
-                                                        $b = 3.75 + $sub_section->sub_initial_min_total_loss; // Example value for $b
-                                                        $c = $sub_section->sub_initial_max_total_loss; // Example value for $c
-
-                                                        // Check conditions and set color accordingly
-                                                        if ($x < $b) {
-                                                            $color = '#28a745';
-                                                        } elseif ($x >= $b && $x <= $c) {
-                                                            $color = "#ffc107";
-                                                        } else {
-                                                            $color = "#dc3545";
-                                                        }
-
-                                                    @endphp
+                                                <div class="card-body">
                                                     <div class="text-center">
-                                                        <h5 class="card-title mb-9 fw-semibold text-white">Availibility : {{ \Illuminate\Support\Str::limit($availability, $limit = 5, $end = '.') == null ? '0' : \Illuminate\Support\Str::limit($availability, $limit = 5, $end = '.') }} %</h5>
-                                                        <span class="">Availibility From Core IDLE ( {{$core_ok + $core_not_ok}} )</span>
+                                                        <h5 class="card-title fw-semibold text-white">
+                                                            Availability : {{ \Illuminate\Support\Str::limit($availability_core_idle, 5, '.') ?? '0' }} %
+                                                        </h5>
+                                                        <span>From Core IDLE + BOOKED ( {{$idle_general + $core_booked}} )</span>
                                                     </div>
                                                     <hr>
                                                     <div class="row align-items-center">
                                                         <div class="col-12">
                                                             <div class="d-flex justify-content-center">
-                                                            
-                                                            <input hidden id="available" type="text" value="{{$availability != null ? $availability : 0}}">
-                                                            @if($availability > 0 && $availability <= 100)
-                                                                <input hidden id="not_available" type="text" value="<?php
-                                                                    
-                                                                    $data = (int)$availability;
-                                                                    $hasil = 100 - $data;
-
-                                                                    echo $hasil;
-                                                                    ?>">
-                                                            @else
-                                                                <input hidden id="not_available" type="text" value="{{100}}">
-                                                            @endif
-                                                            <div id="availibility_chart"></div>
+                                                                <input hidden id="idle_available_1" type="text" value="{{$availability_core_idle ?? 0}}">
+                                                                <input hidden id="idle_not_available_1" type="text" value="{{ 100 - ($availability_core_idle ?? 0) }}">
+                                                                <div id="idle_availibility_chart_1"></div>
                                                             </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                                        
+                                        <!-- Second Pie Chart -->
+                                        <div class="col-3">
+                                            <div class="card overflow-hidden text-white" style="background: linear-gradient(0deg,#49BEFF 0%,  #5D87FF 100%); ">
+                                                <div class="card-body">
+                                                    <div class="text-center">
+                                                        <h5 class="card-title fw-semibold text-white">
+                                                            Availability : {{ \Illuminate\Support\Str::limit($availability_core_capacity, 5, '.') ?? '0' }} %
+                                                        </h5>
+                                                        <span>From Core Capacity ( {{$core_capacity}} )</span>
+                                                    </div>
+                                                    <hr>
+                                                    <div class="row align-items-center">
+                                                        <div class="col-12">
+                                                            <div class="d-flex justify-content-center">
+                                                                <input hidden id="idle_available_2" type="text" value="{{$availability_core_capacity ?? 0}}">
+                                                                <input hidden id="idle_not_available_2" type="text" value="{{ 100 - ($availability_core_capacity ?? 0) }}">
+                                                                <div id="idle_availibility_chart_2"></div>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -357,32 +408,13 @@
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    @php
-                                                                        $cores = DB::table('core')
-                                                                        ->where('sub_section_id', $sub_section->sub_section_id)
-                                                                        ->orderByRaw('CAST(core AS UNSIGNED) ASC')
-                                                                        ->get();
-                                                                    @endphp
-            
                                                                     @foreach ($cores as $core)
                                                                     <tr>
                                                                         <td>{{$core->core}}</td>
-                                                                        <td>{{$core->initial_customers == '' ? 'TRIAS' : $core->initial_customers}}</td>
-                                                                        <td>{{$core->actual_customers == '' ? 'TRIAS' : $core->actual_customers}}</td>
-                                                                        <td>
-                                                                            <?php
-                                                                                if (($core->actual_customers == null || trim($core->actual_customers) == '') || 
-                                                                                    strcasecmp($core->actual_customers, 'TRIAS') == 0 || 
-                                                                                    strcasecmp($core->actual_customers, 'TRIASMITRA') == 0) {
-                                                                                    if ($core->actual_remarks == 'OK') {
-                                                                                        echo '<span class="badge bg-success text-light">AVAILABLE</span>';
-                                                                                    } else {
-                                                                                        echo '<span class="badge bg-danger text-light">NOT AVAILABLE</span>';
-                                                                                    }
-                                                                                }else{
-                                                                                    echo '<span class="badge bg-danger text-light">NOT AVAILABLE</span>';
-                                                                                }
-                                                                            ?>
+                                                                        <td>{{$core->initial_customers}}</td>
+                                                                        <td>{{$core->actual_customers}}</td>
+                                                                        <td style="font-weight:bold;">
+                                                                            {{$core->status}}
                                                                         </td>
                                                                     </tr>
                                                                     @endforeach
@@ -392,11 +424,10 @@
                                                     </div>
                                                 </div>
                                             </div>
-            
                                         </div>
                                         <div class="col-lg-7 ">
                                             <!-- Monthly Earnings -->
-                                            <div class="card" >
+                                            <div class="card border-dark" >
                                                 <div class="card-body">
                                                     <div class="row align-items-start">
                                                         <div class="col-8">
@@ -415,113 +446,62 @@
                                                             </div>
                                                         </div>
                                                         <div class="row">
-                                                            <table class="table table-bordered " style="width:100%; overflow-y:auto;">
+                                                            <table class="border-dark table table-bordered " style="width:100%; overflow-y:auto;">
                                                                 <thead class="bg-dark text-white">
                                                                     <tr>
-                                                                        <th scope="col">Initial</th>
-                                                                        <th scope="col">Actual</th>
+                                                                        <th scope="col">Initial Details</th>
+                                                                        <th scope="col">Actual Details</th>
                                                                     </tr>
                                                                 </thead>
-                                                                @php
-                                                                    $initial_core_capacity = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->get());   
-                                                                    $initial_core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'OK')->where('initial_booked', 'NO')->get());   
-                                                                    $initial_core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'NOT OK')->where('initial_booked', 'NO')->get());   
-                                                                    $initial_core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'AKTIF')->get());   
-                                                                    $initial_core_booked_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'OK')->where('initial_booked', 'YES')->get());
-                                                                    $initial_core_booked_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('initial_remarks', 'NOT OK')->where('initial_booked', 'YES')->get());
-
-                                                                    $actual_core_capacity = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->get());   
-                                                                    $actual_core_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'OK')->where('actual_booked', 'NO')->get());   
-                                                                    $actual_core_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'NOT OK')->where('actual_booked', 'NO')->get());   
-                                                                    $actual_core_aktif = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'AKTIF')->get());   
-                                                                    $actual_core_booked_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'OK')->where('actual_booked', 'YES')->get());
-                                                                    $actual_core_booked_not_ok = count(DB::table('core')->where('sub_section_id', $sub_section->sub_section_id)->where('actual_remarks', 'NOT OK')->where('actual_booked', 'YES')->get());
-                                                                @endphp
-                                                                <tbody>
-                                                                    
-                                                                    @if ($sub_section->sub_owner == 'TRIAS')
-                                                                        <tr>
-                                                                            <td>Section Core Capacity : {{$section->core_capacity}}</td>
-                                                                            <td>Section Core Capacity : {{$section->core_capacity}}</td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td>Sub Section Core Capacity : {{$initial_core_capacity}}</td>
-                                                                            <td>Sub Section Core Capacity : {{$actual_core_capacity}}</td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td>
-                                                                                SOLD Core : 0
-                                                                            </td>
-                                                                            <td>
-                                                                                SOLD Core : 0
-                                                                            </td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td>
+                                                                <tbody style="font-weight:bold">
+                                                                    <tr>
+                                                                        <td>Main Core Capacity : {{$main_core_capacity}}</td>
+                                                                        <td>Main Core Capacity : {{$main_core_capacity}}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Core Capacity : {{$core_capacity}}</td>
+                                                                        <td>Core Capacity : {{$core_capacity}}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>
+                                                                            SOLD Core : {{$sold_core}}
+                                                                        </td>
+                                                                        <td>
+                                                                            SOLD Core : {{$sold_core}}
+                                                                            <br>
+                                                                            <ul style="padding:1rem 2rem;">
+                                                                                <li style="list-style-type:square" > Active : {{$core_active}}</li>
+                                                                                <li style="list-style-type:square" > Mismatch : {{$core_mismatch}}</li>
+                                                                                <li style="list-style-type:square" > 
+                                                                                    Booked :{{$core_booked}}
+                                                                                    <br> 
+                                                                                    <ul style="padding:0.2rem 2rem;">
+                                                                                        <li style="list-style-type:circle" > OK : {{$actual_core_booked_ok}}</li>
+                                                                                        <li style="list-style-type:circle" > NOT OK : {{$actual_core_booked_not_ok}}</li>
+                                                                                    </ul>
+                                                                                </li>
                                                                                 
-                                                                            </td>
-                                                                            <td>
-                                                                                IDLE Core : 
-                                                                                <br>
-                                                                                <ul style="padding:1rem 2rem;">
-                                                                                    <li style="list-style-type:disc" > ACTIVE : {{$actual_core_aktif}}</li>
-                                                                                    <li style="list-style-type:disc" > 
-                                                                                        IDLE : {{($actual_core_ok + $actual_core_not_ok )}}
-                                                                                    </li>
-                                                                                    <div class="p-3">
-                                                                                        <li style="list-style-type:square" > 
-                                                                                            OK : {{($actual_core_ok)}}
-                                                                                        </li>
-                                                                                        <li style="list-style-type:square" > 
-                                                                                            NOT OK : {{($actual_core_not_ok )}}
-                                                                                        </li>
-
-                                                                                    </div>
-                                                                                </ul>
-                                                                            </td>
-                                                                        </tr>
-                                                                    @else
-                                                                        <tr>
-                                                                            <td>Main Core Capacity : {{$section->core_capacity}}</td>
-                                                                            <td>Main Core Capacity : {{$section->core_capacity}}</td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td>Core Capacity : {{$initial_core_capacity}}</td>
-                                                                            <td>Core Capacity : {{$actual_core_capacity}}</td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td>
-                                                                                SOLD Core : {{$initial_core_aktif + $initial_core_booked_ok + $initial_core_booked_not_ok}}
-                                                                            </td>
-                                                                            <td>
-                                                                                SOLD Core : {{$actual_core_aktif + $actual_core_booked_ok + $actual_core_booked_not_ok}} 
-                                                                                <br>
-                                                                                <ul style="padding:1rem 2rem;">
-                                                                                    <li style="list-style-type:square" > Active : {{$actual_core_aktif}}</li>
-                                                                                    <li style="list-style-type:square" > 
-                                                                                        Booked : {{$actual_core_booked_ok + $actual_core_booked_not_ok}}
-                                                                                        <br> 
-                                                                                        <ul style="padding:0.2rem 2rem;">
-                                                                                            <li style="list-style-type:circle" > OK : {{$actual_core_booked_ok}}</li>
-                                                                                            <li style="list-style-type:circle" > NOT OK : {{$actual_core_booked_not_ok}}</li>
-                                                                                        </ul>
-                                                                                    </li>
-                                                                                    
-                                                                                </ul>
-                                                                            </td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td>IDLE Core : {{$initial_core_ok + $initial_core_not_ok}}</td>
-                                                                            <td>IDLE Core : {{$actual_core_ok + $actual_core_not_ok}}
-                                                                                <br>
-                                                                                <ul style="padding:1rem 2rem;">
-                                                                                    <li style="list-style-type:square" > OK : {{$actual_core_ok}}</li>
-                                                                                    <li style="list-style-type:square" > NOT OK : {{$actual_core_not_ok}}</li>
-                                                                                </ul>
-                                                                            </td>
-                                                                        </tr>
-                                                                    @endif
-                                                                        
+                                                                            </ul>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>IDLE Core : {{$idle_general}}</td>
+                                                                        <td>
+                                                                            IDLE Core : {{$idle_general}}
+                                                                            <br>
+                                                                            <ul style="padding:1rem 2rem;">
+                                                                                <li style="list-style-type:square" > Used : {{$core_used}}</li>
+                                                                                <li style="list-style-type:square" > 
+                                                                                    IDLE :{{$idle_core}}
+                                                                                    <br> 
+                                                                                    <ul style="padding:0.2rem 2rem;">
+                                                                                        <li style="list-style-type:circle" > OK : {{$actual_core_idle_ok}}</li>
+                                                                                        <li style="list-style-type:circle" > NOT OK : {{$actual_core_idle_not_ok}}</li>
+                                                                                    </ul>
+                                                                                </li>
+                                                                            </ul>
+                                                                        </td>
+                                                                    </tr>
                                                                 </tbody>
                                                             </table>
                                                         </div>
@@ -538,7 +518,6 @@
             </div>
         </div>
     </div>
-
     <div class="row">
         <div class="col-lg-12 align-items-stretch">
             <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
@@ -561,9 +540,9 @@
                                         Select Action
                                     </button>
                                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                        <a href="{{route('core.create', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_type' => $section->section_type, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section_id , 'input_type' => 'add'])}}" type="button" style="text-transform: capitalize;" class="dropdown-item">Add Cores</a>
-                                        <a href="{{route('sor.download', ['type'=>'sub_section', 'project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_type' => $section->section_type, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section_id])}}" type="button" style="text-transform: capitalize;" class="dropdown-item">Download Actual Sor Files</a>
-                                        <a href="{{route('core.edit', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_type' => $section->section_type, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section_id])}}" type="button" style="text-transform: capitalize;" class="dropdown-item">Manage Core</a>
+                                        <a href="{{route('core.create', ['project_id'=>$project->project_id,'route_id'=>$route_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'customer_id'=>$customer_id, 'type_id'=>$type_id, 'sub_section_id'=>$sub_section_id , 'input_type' => 'add'])}}" type="button" style="text-transform: capitalize;" class="dropdown-item">Add Cores</a>
+                                        <a href="{{route('sor.download', ['project_id'=>$project->project_id,'route_id'=>$route_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id'=>$sub_section_id ])}}" type="button" style="text-transform: capitalize;" class="dropdown-item">Download Actual Sor Files</a>
+                                        <a href="{{route('core.edit', ['project_id'=>$project->project_id,'route_id'=>$route_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'customer_id'=>$customer_id, 'type_id'=>$type_id, 'sub_section_id'=>$sub_section_id])}}" type="button" style="text-transform: capitalize;" class="dropdown-item">Manage Core</a>
                                     </div>
                                 </div>
                             </div>
@@ -571,6 +550,12 @@
                                 <table class="table  table-bordered table-striped text-nowrap mb-0 align-middle" style="margin-top:1rem;">
                                     <thead class="text-dark fs-4 bg-dark">
                                             <tr>
+                                                <th>
+                                                    <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0 px-4">Link ID</h6>
+                                                </th>
+                                                <th>
+                                                    <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0 px-4">CID</h6>
+                                                </th>
                                                 <th>
                                                     <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0 px-4">Core</h6>
                                                 </th>
@@ -603,35 +588,28 @@
                                             </tr>
                                     </thead>
                                     <tbody>
-                                        @php 
-                                            $cores = DB::table('core')->where('sub_section_id',$sub_section->sub_section_id)->orderBy(DB::raw('CAST(core AS UNSIGNED)'), 'asc')->get();
-                                        @endphp
                                         @if (count($cores) > 0 )
                                             @foreach ($cores as $core)
                                                 <tr>
+                                                    <td class="text-center">{{$core->project_id.$core->route_id.$core->segment_id.$core->section_id.$core->core}}</td>
+                                                    <td class="text-center">{{$core->project_id.$core->route_id.$core->segment_id.$core->section_id.$core->core.$core->customer_id.$core->type_id}}</td>
                                                     <td class="text-center" style="width:10%;">{{$core->core}}</td>
                                                     <td class="text-center">{{$core->initial_customers}}</td>
                                                     <td class="text-center">{{$core->actual_customers}}</td>
-                                                    <td class="text-center">{{$core->initial_end_cable}}</td>
-                                                    <td class="text-center">{{$core->initial_total_loss_db}}</td>
+                                                    <td style="cursor: default;" class="text-center" data-toggle="tooltip" data-placement="top" title="Minimum Length : {{$sub_section->sub_initial_length}}">{{$core->initial_end_cable}}</td>
+                                                    <td style="cursor: default;" class="text-center" data-toggle="tooltip" data-placement="top" title="Max Total Loss : {{$sub_section->sub_initial_max_total_loss}}">{{$core->initial_total_loss_db}}</td>
                                                     <td class="text-center">{{$core->initial_loss_db_km}}</td>
                                                     <td class="text-center">
-                                                        @if($core->initial_remarks == 'AKTIF')
-                                                            - 
-                                                        @else
-                                                            {{$core->initial_remarks}}
-                                                        @endif
+                                                        @php
+                                                            if ($core->initial_remarks == 'OK') {
+                                                                echo '<span class="badge bg-success text-light">'.$core->initial_remarks.'</span>';
+                                                            } else {
+                                                                echo '<span style="background:rgba(246,39,127,1);" class="badge text-light">'.$core->initial_remarks.'</span>';
+                                                            }
+                                                        @endphp
                                                     </td>
-                                                    <td class="text-center">
-                                                        @if($core->initial_booked == 'YES')
-                                                            BOOKED
-                                                        @else
-                                                            @if($core->initial_remarks == 'AKTIF')
-                                                                ACTIVE
-                                                            @else
-                                                                IDLE
-                                                            @endif
-                                                        @endif
+                                                    <td class="text-center" style="font-weight: bold;">
+                                                        {{$core->status}}
                                                     </td>
                                                     @if (auth()->user()->role == "engineering")
                                                         <td class="text-center"><a onclick="return confirmDeleteCore(event)" href="{{route('core.delete', ['core_id' => $core->core_id])}}" class="btn btn-danger btn-sm">Delete</a></td>
@@ -640,7 +618,7 @@
                                             @endforeach
                                         @else
                                             <tr>
-                                                <td colspan="7" class="text-center">Empty</td>
+                                                <td colspan="11" class="text-center">Empty</td>
                                             </tr>
                                         @endif
                                     </tbody>
@@ -659,8 +637,10 @@
                                         Select Action
                                     </button>
                                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                        <a href="{{route('sor.download', ['type'=>'sub_section', 'project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_type' => $section->section_type, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section_id])}}" type="button" style="text-transform: capitalize;" class="dropdown-item">Download Sor Files</a>
-                                        <a href="{{route('core.edit', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_type' => $section->section_type, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section_id])}}" type="button" style="text-transform: capitalize;" class="dropdown-item">Manage Core</a>
+                                        <a href="{{route('sor.download', ['project_id'=>$project->project_id,'route_id'=>$route_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'sub_section_id'=> $sub_section_id])}}" type="button" style="text-transform: capitalize;" class="dropdown-item">Download Sor Files</a>
+                                        @if(auth()->user()->role == 'engineering' || auth()->user()->role == 'ms')
+                                            <a href="{{route('core.edit', ['project_id'=>$project->project_id,'route_id'=>$route_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'customer_id'=>$customer_id, 'type_id'=>$type_id, 'sub_section_id'=>$sub_section_id])}}" type="button" style="text-transform: capitalize;" class="dropdown-item">Manage Core</a>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -669,13 +649,19 @@
                                     <thead class="text-dark fs-4 bg-dark">
                                             <tr>
                                                 <th>
+                                                    <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0 px-4">Link ID</h6>
+                                                </th>
+                                                <th>
+                                                    <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0 px-4">CID</h6>
+                                                </th>
+                                                <th>
                                                     <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0 px-4">Core</h6>
                                                 </th>
                                                 <th class="text-center">
-                                                    <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0">Actual Customers</h6>
+                                                    <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0">Initial Customers</h6>
                                                 </th>
                                                 <th class="text-center">
-                                                    <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0">Initial Customers</h6>
+                                                    <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0">Actual Customers</h6>
                                                 </th>
                                                 <th class="text-center">
                                                     <h6 style="display:inline-block; color:white;" class="fw-semibold mb-0">Length</h6>
@@ -698,42 +684,35 @@
                                             </tr>
                                     </thead>
                                     <tbody>
-                                        @php
-                                            $cores = DB::table('core')->where('sub_section_id',$sub_section->sub_section_id)->orderBy(DB::raw('CAST(core AS UNSIGNED)'), 'asc')->get();
-                                        @endphp
                                         @if (count($cores) > 0 )
                                             @foreach ($cores as $core)
-                                                <tr style="cursor: pointer;" class="clickable-row" onclick="window.location.href='{{ route('core.show', ['project_id'=>$project->project_id, 'segment_id'=> $segment->segment_id, 'section_type' => $section->section_type, 'section_id' => $section->section_id, 'sub_section_id' => $sub_section_id, 'core' => $core->core]) }}';" >
+                                                <tr style="cursor: pointer;" class="clickable-row" onclick="window.location.href='{{ route('core.show', ['project_id'=>$project->project_id, 'route_id'=>$segment->route_id, 'segment_id'=> $segment->segment_id, 'section_id' => $section->section_id, 'core' => $core->core, 'sub_section_id' => $sub_section_id]) }}';" >
+                                                    <td class="text-center">{{$core->project_id.$core->route_id.$core->segment_id.$core->section_id.$core->core}}</td>
+                                                    <td class="text-center">{{$core->project_id.$core->route_id.$core->segment_id.$core->section_id.$core->core.$core->customer_id.$core->type_id}}</td>
                                                     <td class="text-center" style="width:10%;">{{$core->core}}</td>
-                                                    <td class="text-center">{{$core->actual_customers}}</td>
                                                     <td class="text-center">{{$core->initial_customers}}</td>
+                                                    <td class="text-center">{{$core->actual_customers}}</td>
                                                     <td class="text-center">{{$core->actual_end_cable}}</td>
                                                     <td class="text-center">{{$core->actual_total_loss_db}}</td>
-                                                    <td class="text-center" >{{$core->actual_loss_db_km}}</td>
+                                                    <td class="text-center">{{$core->actual_loss_db_km}}</td>
                                                     <td class="text-center">
-                                                        @if($core->actual_remarks == 'AKTIF')
-                                                            - 
-                                                        @else
-                                                            {{$core->actual_remarks}}
-                                                        @endif
+                                                        @php
+                                                            if ($core->actual_remarks == 'OK') {
+                                                                echo '<span class="badge bg-success text-light">'.$core->actual_remarks.'</span>';
+                                                            } else {
+                                                                echo '<span style="background:rgba(246,39,127,1);" class="badge text-light">'.$core->actual_remarks.'</span>';
+                                                            }
+                                                        @endphp
                                                     </td>
-                                                    <td class="text-center">
-                                                        @if($core->actual_booked == 'YES')
-                                                            BOOKED
-                                                        @else
-                                                            @if($core->actual_remarks == 'AKTIF')
-                                                                ACTIVE
-                                                            @else
-                                                                IDLE
-                                                            @endif
-                                                        @endif
+                                                    <td class="text-center" style="font-weight: bold;">
+                                                        {{$core->status}}
                                                     </td>
                                                     <td class="text-center">{{substr($core->notes, 0, 24)}}</td>
                                                 </tr>
                                             @endforeach
                                         @else
                                             <tr>
-                                                <td colspan="6" class="text-center">Empty</td>
+                                                <td colspan="11" class="text-center">Empty</td>
                                             </tr>
                                         @endif
                                     </tbody>
@@ -750,7 +729,6 @@
 
 @section('script')
     <script>
-
         function confirmDelete(event) {
             if (confirm("Are you sure you want to delete this sub section ?")) {
                 return true;
@@ -770,69 +748,48 @@
     </script>
 
     <script>
-        // =====================================
-        // Breakup
-        // =====================================
-        const value1 = Number(document.getElementById("available").value);
-        const value2 = Number(document.getElementById("not_available").value);
-        var breakup = {
-            color: "#adb5bd",
-            series: [value1, value2],
-            labels: ["Available", "Not Available"],
-            chart: {
-                width: 260,
-                type: "donut",
-                fontFamily: "Plus Jakarta Sans', sans-serif",
-                foreColor: "#adb0bb",
-            },
-            plotOptions: {
-                pie: {
-                    startAngle: 0,
-                    endAngle: 360,
-                    donut: {
-                    size: '75%',
+        function renderChart(containerId, availableId, notAvailableId) {
+            const value1 = Number(document.getElementById(availableId).value);
+            const value2 = Number(document.getElementById(notAvailableId).value);
+
+            var chartOptions = {
+                series: [value1, value2],
+                labels: ["Available", "Not Available"],
+                chart: {
+                    width: 260,
+                    type: "donut",
+                    fontFamily: "Plus Jakarta Sans', sans-serif",
+                    foreColor: "#adb0bb",
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '75%',
+                        },
                     },
                 },
-            },
-            stroke: {
-                show: false,
-            },
-
-            dataLabels: {
-                enabled: false,
-            },
-
-            legend: {
-                show: false,
-            },
-            colors: ["#7FF627", "#ecf2ff", "#ecf2ff"],
-
-            responsive: [
-            {
-                breakpoint: 991,
-                options: {
-                chart: {
-                    width: 150,
-                },
-                },
-            },
-            ],
-            tooltip: {
-                enabled: true,
-                theme: "dark",
-                fillSeriesColor: false,
-                onDatasetHover: {
-                    highlightDataSeries: false,
-                },
-                y: {
-                    formatter: function (val) {
-                        return val + "%"
-                    }
+                stroke: { show: false },
+                dataLabels: { enabled: false },
+                legend: { show: false },
+                colors: ["#7FF627", "#ecf2ff"],
+                responsive: [{
+                    breakpoint: 991,
+                    options: { chart: { width: 150 } }
+                }],
+                tooltip: {
+                    enabled: true,
+                    theme: "dark",
+                    y: { formatter: function (val) { return val + "%" } }
                 }
-            },
-        };
+            };
 
-        var chart = new ApexCharts(document.querySelector("#availibility_chart"), breakup);
-        chart.render();
+            var chart = new ApexCharts(document.querySelector(`#${containerId}`), chartOptions);
+            chart.render();
+        }
+
+        // Render both pie charts
+        renderChart("idle_availibility_chart_1", "idle_available_1", "idle_not_available_1");
+        renderChart("idle_availibility_chart_2", "idle_available_2", "idle_not_available_2");
     </script>
+
 @endsection

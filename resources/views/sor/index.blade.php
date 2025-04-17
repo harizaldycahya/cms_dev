@@ -7,9 +7,9 @@
     $section = DB::table('section')->where('section_id', $section_id)->get()->first();
     if(isset($sub_section)){
         $sub_section = DB::table('sub_section')->where('sub_section_id', $sub_section_id)->get()->first();
-        $requests_sor = DB::table('draf_sor')->where('status', 'PROCESS')->where('sub_section_id', $sub_section_id)->orderBy('date', 'desc')->get();
+        $requests_sor = DB::table('sor_request')->where('status', 'PROCESS')->where('sub_section_id', $sub_section_id)->orderBy('date', 'desc')->get();
     }else{
-        $requests_sor = DB::table('draf_sor')->where('status', 'PROCESS')->where('section_id', $section_id)->orderBy('date', 'desc')->get();
+        $requests_sor = DB::table('sor_request')->where('status', 'PROCESS')->where('section_id', $section_id)->orderBy('date', 'desc')->get();
     }
 
 

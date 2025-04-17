@@ -74,16 +74,14 @@
     <!--  Header End -->
 @endsection
 
-
 @section('breadcrumb')
-    <div class="card bg-light-info shadow-none position-relative overflow-hidden">
-        <div class="card-body px-4 py-5">
+    <div class="card bg-dark text-white shadow-lg position-relative overflow-hidden">
+        <div class="card-body px-5 py-5">
             <div class="row align-items-center">
                 <div class="col-9">
-                    <h3 class="fw-semibold" style="font-size: 2rem;">Create Project</h3>
-                    <hr>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
+                    <h3 class="fw-semibold text-white" style="font-size: 1.5rem;"> CREATE CABLE PROJECT </h3>
+                    <nav aria-label="breadcrumb" class="mt-3">
+                        <ol class="breadcrumb" style="font-size: 1rem;">
                             <li class="breadcrumb-item">
                                 <a class="text-decoration-none" href="/">Dashboard</a>
                             </li>
@@ -118,6 +116,9 @@
                                         </th>
                                         <th>
                                             <h6 style="display:inline-block; margin-right:.5rem;" class="fw-semibold mb-0">
+                                                Project ID</h6>
+                                        <th>
+                                            <h6 style="display:inline-block; margin-right:.5rem;" class="fw-semibold mb-0">
                                                 Project Name</h6>
                                         </th>
                                         <th>
@@ -134,10 +135,21 @@
                                                 <i style="font-size:1.5rem;" class="ti ti-square-x"></i>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td style="width:10%;">
+                                            <input 
+                                                class="form-control" 
+                                                name="project_id[]" 
+                                                type="text" 
+                                                maxlength="3" 
+                                                pattern="\d{3}" 
+                                                title="Please enter exactly 3 digits." 
+                                                required
+                                            >
+                                        </td>
+                                        <td style="width:50%;">
                                             <input class="form-control" name="project_name[]" type="text">
                                         </td>
-                                        <td>
+                                        <td style="width:40%;">
                                             <input class="form-control" name="project_description[]" type="text">
                                         </td>
                                     </tr>
